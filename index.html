@@ -14,8 +14,8 @@ html, body, div, canvas {
 	position: absolute;
 	top: 0px;
 	left: 0px;
-	width: 45px;
-	height: 20px;
+	width: 100px;
+	height: 100px;
 	padding: 5px;
 	font-family: "Monaco", "Courier New", "Courier", monospace;
 	font-size: 14px;
@@ -32,11 +32,8 @@ html, body, div, canvas {
 <!-- <script src="hand-1.1.1.js"></script> -->
 <script>
 
-// show the FPS
+// get the debug element
 var debug = document.getElementById("debug");
-setInterval(function() {
-	debug.innerHTML = BABYLON.Tools.GetFps().toPrecision(4);
-}, 500);
 
 // Get the Canvas element from our HTML below
 var canvas = document.getElementById("render");
@@ -59,10 +56,11 @@ camera.upperBetaLimit = Math.PI * 0.66;
 // arcCamera.setPosition(new BABYLON.Vector3(0, 0, 50));
 
 // create a fill light
-var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(0, 0, 10), scene);
+var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(25, 25, 25), scene);
 
 // objects are at 0, 0, 0 by default, unless you specify otherwise after calling them
-var origin = BABYLON.Mesh.CreateSphere("origin", 10, 1.0, scene);
+//var origin = BABYLON.Mesh.CreateSphere("origin", 10, 1.0, scene);
+var origin = BABYLON.Mesh.CreateBox("origin", 1.0, scene);
 origin.material = new BABYLON.StandardMaterial("origin-material", scene);
 
 // box: name, size of box, scene to add it to
@@ -171,17 +169,25 @@ scene.registerBeforeRender(function () {
 	}
 	
 	// if the keyboard says we're moving, move the origin sphere thing!
-	if (moveUp && !moveDown) { // go up
-		origin.position.y += 0.1;
+	if (moveUp && !moveDown) { // go forward
+		origin.position.x = origin.position.x + Math.sin(origin.rotation.z) * -0.25;
+		origin.position.y = origin.position.y + Math.cos(origin.rotation.z) * 0.25;
 	}
-	if (!moveUp && moveDown) { // go down
-		origin.position.y -= 0.1;
+	if (!moveUp && moveDown) { // go reverse
+		origin.position.x = origin.position.x + Math.sin(origin.rotation.z) * 0.25;
+		origin.position.y = origin.position.y + Math.cos(origin.rotation.z) * -0.25;
 	}
-	if (moveLeft && !moveRight) { // go left
-		origin.position.x += 0.1;
+	if (moveLeft && !moveRight) { // rotate left
+		origin.rotation.z -= 0.1;
 	}
-	if (!moveLeft && moveRight) { // go right
-		origin.position.x -= 0.1;
+	if (!moveLeft && moveRight) { // rotate right
+		origin.rotation.z += 0.1;
+		
+	}
+	if (origin.rotation.z > Math.PI * 2) {
+		origin.rotation.z = 0;
+	} else if (origin.rotation.z < 0) {
+		origin.rotation.z = Math.PI * 2;
 	}
 	
 	// origin sphere's normal color...
@@ -200,7 +206,7 @@ scene.registerBeforeRender(function () {
 	// have the camera move based on the origin sphere
 	camera.target = origin.position;
 	// have the light follow the camera
-	light.position = camera.position;
+	//light.position = camera.position;
 	
 	//console.log('Camera alpha: ' + camera.alpha + ', beta: ' + camera.beta);
 	
@@ -215,6 +221,14 @@ engine.runRenderLoop(function () {
 window.addEventListener("resize", function() {
 	engine.resize();
 });
+
+// debug info
+setInterval(function() {
+	debug_txt = '';
+	debug_txt += 'FPS: ' + BABYLON.Tools.GetFps().toPrecision(4) + "\n";
+	debug_txt += 'R: ' + origin.rotation;
+	debug.innerHTML = debug_txt;
+}, 500);
 
 </script>
 </body>
