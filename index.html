@@ -15,7 +15,7 @@ html, body, div, canvas {
 	top: 0px;
 	left: 0px;
 	width: 100px;
-	height: 100px;
+	height: 150px;
 	padding: 5px;
 	font-family: "Monaco", "Courier New", "Courier", monospace;
 	font-size: 14px;
@@ -97,25 +97,25 @@ torus.position = new BABYLON.Vector3(0,5,0);
 scene.activeCamera.attachControl(canvas);
 
 // move things around, do whatever you want, before the scene is rendered
-var moveUp = false;
-var moveDown = false;
-var moveLeft = false;
-var moveRight = false;
+var moveForward = false;
+var moveReverse = false;
+var rotateLeft = false;
+var rotateRight = false;
 
 // listen for keys going down, register them as movement
 window.addEventListener('keydown', function(e) {
 	switch (e.keyCode) {
 		case 87: // w
-		moveUp = true;
+		moveForward = true;
 		break;
 		case 65: // a
-		moveLeft = true;
+		rotateLeft = true;
 		break;
 		case 68: // d
-		moveRight = true;
+		rotateRight = true;
 		break;
 		case 83: // s
-		moveDown = true;
+		moveReverse = true;
 		break;
 		default:
 		//console.log('key pressed: ' + e.keyCode);
@@ -126,16 +126,16 @@ window.addEventListener('keydown', function(e) {
 window.addEventListener('keyup', function(e) {
 	switch (e.keyCode) {
 		case 87: // w
-		moveUp = false;
+		moveForward = false;
 		break;
 		case 65: // a
-		moveLeft = false;
+		rotateLeft = false;
 		break;
 		case 68: // d
-		moveRight = false;
+		rotateRight = false;
 		break;
 		case 83: // s
-		moveDown = false;
+		moveReverse = false;
 		break;
 		default:
 		//console.log('key released: ' + e.keyCode);
@@ -143,7 +143,18 @@ window.addEventListener('keyup', function(e) {
 });
 
 var boxdir = true; // keep track of the little box's state
+
+// player box info
+var currentlyThrusting = false;
 var currentSpeed = 0.0;
+var currentRotation = 0.0;
+var movingRotation = 0.0;
+var maxSpeed = 0.2;
+var minSpeed = -0.1;
+var accelerationRate = 0.01;
+var actualAccelRate = 0.0;
+var rotationRate = 0.1;
+var rotationThrustRate = 0.1;
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
@@ -169,35 +180,13 @@ scene.registerBeforeRender(function () {
 		box2.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 	}
 	
-	// thrust forward / reverse
-	if (moveUp && !moveDown) { // thrust forward
-		currentSpeed += 0.01;
-	}
-	
-	if (!moveUp && moveDown) { // thrust reverse
-		currentSpeed -= 0.01;
-	}
-	
-	// keep speed within bounds
-	if (currentSpeed > 0.25) {
-		currentSpeed = 0.25;
-	}
-	if (currentSpeed < -0.1) {
-		currentSpeed = -0.1;
-	}
-	
-	// move the ship
-	origin.position.x = origin.position.x + Math.sin(origin.rotation.z) * -currentSpeed;
-	origin.position.y = origin.position.y + Math.cos(origin.rotation.z) * currentSpeed;
-	
 	// ship rotation
-	if (moveLeft && !moveRight) { // rotate left
-		origin.rotation.z -= 0.1;
+	if (rotateLeft && !rotateRight) { // rotate left
+		origin.rotation.z -= rotationRate;
 	}
 	
-	if (!moveLeft && moveRight) { // rotate right
-		origin.rotation.z += 0.1;
-		
+	if (!rotateLeft && rotateRight) { // rotate right
+		origin.rotation.z += rotationRate;
 	}
 	
 	// keep rotation within bounds
@@ -206,6 +195,107 @@ scene.registerBeforeRender(function () {
 	} else if (origin.rotation.z < 0) {
 		origin.rotation.z = Math.PI * 2;
 	}
+	
+	// thrust forward / reverse
+	if (moveForward || moveReverse) { // thrust forward
+		currentlyThrusting = true;
+	} else {
+		currentlyThrusting = false;
+	}
+	
+	// keep speed within bounds
+	if (currentSpeed > maxSpeed) {
+		currentSpeed = maxSpeed;
+	}
+	if (currentSpeed < minSpeed) {
+		currentSpeed = minSpeed;
+	}
+	
+	currentRotation = origin.rotation.z;
+	
+	// if we are thrusting in a direction, try to move along the ship's current rotation
+	if (movingRotation != currentRotation && currentlyThrusting) {
+		
+		// get the opposite angle to how we are currently moving
+		var oppositeMovingAngle = 0.0;
+		if (movingRotation <= Math.PI * 2 && movingRotation > Math.PI) {
+			oppositeMovingAngle = movingRotation - Math.PI;
+		} else {
+			oppositeMovingAngle = movingRotation + Math.PI;
+		}
+		//console.log('opposite angle to how we are moving: ' + oppositeMovingAngle);
+		
+		// get the difference between how we are moving and how we want to move
+		var angleDiff = Math.abs(movingRotation - currentRotation);
+		if (angleDiff > Math.PI) {
+			angleDiff = (Math.PI * 2) - angleDiff;
+		}
+		console.log('angle diff between current moving and facing: ' + angleDiff + '/' + Math.PI);
+		console.log('percent diff: ' + Math.round((angleDiff / Math.PI) * 100) );
+		
+		/*
+		
+		ugh, what the fuuuuuuck
+		
+		what to do:
+		
+		- if the new angle (current facing direction) is near a 180-degree turn, (WIDE TURN THRESHOLD)
+			make the ship slow til it reaches 0 and then accelerate in the new direction
+		- if the new angle is within the 90-degree cone of where you were moving, (ACUTE TURN THRESHOLD)
+			make the ship slow down a tiny bit til it reaches the new angle
+		- if the new angle is not a full 180, but over the 90-degree cone, (REGULAR TURN THRESHOLD)
+			make the ship slow down a little and then accelerate as usual
+		
+		*/
+		
+		
+		/*
+		
+		measurements...
+		relative direction, PI, degrees, radians
+		
+		STRAIGHT AHEAD = PI * 0 or 0 degrees or 0 radians
+		RIGHT = PI * 0.5 or 90 degrees or ~1.57 radians
+		BACKWARDS = PI * 1 or 180 degrees or ~3.14 radians
+		LEFT = PI * 1.25 or 270 degrees or ~3.93 radians
+		FULL CIRCLE = PI * 2 or 360 degrees or ~6.28 radians
+		
+		*/
+		
+		//movingRotation += currentRotation/10;
+		//movingRotation = currentRotation + (angleDiff * (angleDiff / Math.PI)); // what????
+		movingRotation = currentRotation;
+		actualAccelRate = accelerationRate;
+		
+		if (moveForward && !moveReverse) { // thrust forward
+			currentSpeed += actualAccelRate;
+		}
+		
+		if (!moveForward && moveReverse) { // thrust reverse
+			currentSpeed -= actualAccelRate;
+		}
+		
+	} else if (movingRotation == currentRotation && currentlyThrusting) { // we are just moving straight ahead
+		
+		// accelerate!
+		
+		if (moveForward && !moveReverse) { // thrust forward
+			currentSpeed += accelerationRate;
+		}
+		
+		if (!moveForward && moveReverse) { // thrust reverse
+			currentSpeed -= accelerationRate;
+		}
+		
+	} else {
+		
+		// we are not thrusting, so just keep moving straight at the same speed
+		
+	}
+	
+	// move the ship
+	origin.position.x = origin.position.x + Math.sin(movingRotation) * -currentSpeed;
+	origin.position.y = origin.position.y + Math.cos(movingRotation) * currentSpeed;
 	
 	// origin sphere's normal color...
 	origin.material.emissiveColor = new BABYLON.Color4(0, 0, 0, 1);
@@ -249,7 +339,8 @@ setInterval(function() {
 	debug_txt += 'FPS: ' + BABYLON.Tools.GetFps().toPrecision(4) + '<br />';
 	debug_txt += 'X: ' + prettyNum(origin.position.x) + '<br />';
 	debug_txt += 'Y: ' + prettyNum(origin.position.y) + '<br />';
-	debug_txt += 'R: ' + prettyNum(origin.rotation.z) + '<br />';
+	debug_txt += 'mR: ' + prettyNum(movingRotation) + '<br />';
+	debug_txt += 'cR: ' + prettyNum(currentRotation) + '<br />';
 	debug_txt += 'S: ' + prettyNum(currentSpeed);
 	debug.innerHTML = debug_txt;
 }, 100);
