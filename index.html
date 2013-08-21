@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+<title>babylon test</title>
+<style type="text/css">
+html, body, div, canvas {
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+}
+#debug {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 45px;
+	height: 20px;
+	padding: 5px;
+	font-family: "Monaco", "Courier New", "Courier", monospace;
+	font-size: 14px;
+	color: white;
+	background-color: black;
+	cursor: default;
+}
+</style>
+</head>
+<body>
+<div id="debug"></div>
+<div id="root"><canvas id="render"></canvas></div>
+<script src="babylon.1.3.0.js"></script>
+<!-- <script src="hand-1.1.1.js"></script> -->
+<script>
+
+// show the FPS
+var debug = document.getElementById("debug");
+setInterval(function() {
+	debug.innerHTML = BABYLON.Tools.GetFps().toPrecision(4);
+}, 500);
+
+// Get the Canvas element from our HTML below
+var canvas = document.getElementById("render");
+// Load BABYLON 3D engine
+var engine = new BABYLON.Engine(canvas, false);
+var scene = new BABYLON.Scene(engine);
+
+// Creating a camera looking to the zero point (0,0,0)
+// arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
+var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 15, new BABYLON.Vector3(0, 0, 0), scene);
+// constrain the camera
+camera.lowerRadiusLimit = 10;
+camera.upperRadiusLimit = 20;
+camera.lowerAlphaLimit = Math.PI * 0.33;
+camera.upperAlphaLimit = Math.PI * 0.66;
+camera.lowerBetaLimit = Math.PI * 0.33;
+camera.upperBetaLimit = Math.PI * 0.66;
+// later change ArcCamera's target and position with...
+// arcCamera.target = new BABYLON.Vector3(3, 0, 0);
+// arcCamera.setPosition(new BABYLON.Vector3(0, 0, 50));
+
+// create a fill light
+var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(0, 0, 10), scene);
+
+// objects are at 0, 0, 0 by default, unless you specify otherwise after calling them
+var origin = BABYLON.Mesh.CreateSphere("origin", 10, 1.0, scene);
+origin.material = new BABYLON.StandardMaterial("origin-material", scene);
+
+// box: name, size of box, scene to add it to
+var box = BABYLON.Mesh.CreateBox("Box", 4.0, scene);
+box.position = new BABYLON.Vector3(-5,0,0);
+box.rotation.x = Math.PI/3;
+box.rotation.y = -Math.PI/3;
+box.rotation.z = Math.PI/5;
+
+// create a littler box
+var box2 = BABYLON.Mesh.CreateBox("Box2", 3.0, scene);
+box2.parent = box;
+box2.position.y = 10;
+box2.material = new BABYLON.StandardMaterial("box2-material", scene);
+
+// sphere: name, segments (detail), size, scene to add it to
+var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
+sphere.position = new BABYLON.Vector3(5,0,0);
+
+// flat plane: name, size of plane, scene to add it to
+var plane = BABYLON.Mesh.CreatePlane("Plane", 50.0, scene);
+plane.position = new BABYLON.Vector3(0, 0, -30);
+plane.rotation.y = -Math.PI;
+
+// cylinder: name, height, diameter, segments (detail), scene to add it to, whether it's updatable
+var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
+cylinder.position = new BABYLON.Vector3(0,-5,0);
+
+// torus: name, diameter, thickness, segments (detail), scene to add it to, whether it's updatable
+var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 20, scene, false);
+torus.position = new BABYLON.Vector3(0,5,0);
+
+// Attach the camera to the scene
+scene.activeCamera.attachControl(canvas);
+
+// move things around, do whatever you want, before the scene is rendered
+var moveUp = false;
+var moveDown = false;
+var moveLeft = false;
+var moveRight = false;
+
+// listen for keys going down, register them as movement
+window.addEventListener('keydown', function(e) {
+	switch (e.keyCode) {
+		case 87: // w
+		moveUp = true;
+		break;
+		case 65: // a
+		moveLeft = true;
+		break;
+		case 68: // d
+		moveRight = true;
+		break;
+		case 83: // s
+		moveDown = true;
+		break;
+		default:
+		//console.log('key pressed: ' + e.keyCode);
+	}
+});
+
+// register keys coming back up, register them as stopping movement
+window.addEventListener('keyup', function(e) {
+	switch (e.keyCode) {
+		case 87: // w
+		moveUp = false;
+		break;
+		case 65: // a
+		moveLeft = false;
+		break;
+		case 68: // d
+		moveRight = false;
+		break;
+		case 83: // s
+		moveDown = false;
+		break;
+		default:
+		//console.log('key released: ' + e.keyCode);
+	}
+});
+
+var boxdir = true; // keep track of the little box's state
+
+// this is the pre-render update() loop
+scene.registerBeforeRender(function () {
+	
+	// move the little box back and forth
+	//console.log(box2.position.y);
+	if (boxdir == true && box2.position.y > -10) {
+		box2.position.y -= 0.1;
+		if (box2.position.y <= -10) {
+			boxdir = false;
+		}
+	} else if (box2.position.y < 10 && boxdir == false) {
+		box2.position.y += 0.1;
+		if (box2.position.y >= 10) {
+			boxdir = true;
+		}
+	}
+	
+	// normal box color:
+	box2.material.emissiveColor = new BABYLON.Color4(0, 0, 0, 1);
+	// if the box intersects with the other box, turn it red!
+	if (box2.intersectsMesh(box, true)) {
+		box2.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
+	}
+	
+	// if the keyboard says we're moving, move the origin sphere thing!
+	if (moveUp && !moveDown) { // go up
+		origin.position.y += 0.1;
+	}
+	if (!moveUp && moveDown) { // go down
+		origin.position.y -= 0.1;
+	}
+	if (moveLeft && !moveRight) { // go left
+		origin.position.x += 0.1;
+	}
+	if (!moveLeft && moveRight) { // go right
+		origin.position.x -= 0.1;
+	}
+	
+	// origin sphere's normal color...
+	origin.material.emissiveColor = new BABYLON.Color4(0, 0, 0, 1);
+	
+	// turn the origin sphere red if it goes into the other sphere
+	if (origin.intersectsMesh(sphere, true)) {
+		origin.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
+	}
+	
+	// turn the origin sphere blue if it goes into the torus
+	if (origin.intersectsMesh(torus, true)) {
+		origin.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
+	}
+	
+	// have the camera move based on the origin sphere
+	camera.target = origin.position;
+	// have the light follow the camera
+	light.position = camera.position;
+	
+	//console.log('Camera alpha: ' + camera.alpha + ', beta: ' + camera.beta);
+	
+});
+
+// Once the scene is loaded, just register a render loop to render it
+engine.runRenderLoop(function () {
+	scene.render();
+});
+
+// handle window resize
+window.addEventListener("resize", function() {
+	engine.resize();
+});
+
+</script>
+</body>
+</html>
