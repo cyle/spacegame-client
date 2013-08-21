@@ -143,6 +143,7 @@ window.addEventListener('keyup', function(e) {
 });
 
 var boxdir = true; // keep track of the little box's state
+var currentSpeed = 0.0;
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
@@ -168,22 +169,38 @@ scene.registerBeforeRender(function () {
 		box2.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 	}
 	
-	// if the keyboard says we're moving, move the origin sphere thing!
-	if (moveUp && !moveDown) { // go forward
-		origin.position.x = origin.position.x + Math.sin(origin.rotation.z) * -0.25;
-		origin.position.y = origin.position.y + Math.cos(origin.rotation.z) * 0.25;
+	// thrust forward / reverse
+	if (moveUp && !moveDown) { // thrust forward
+		currentSpeed += 0.01;
 	}
-	if (!moveUp && moveDown) { // go reverse
-		origin.position.x = origin.position.x + Math.sin(origin.rotation.z) * 0.25;
-		origin.position.y = origin.position.y + Math.cos(origin.rotation.z) * -0.25;
+	
+	if (!moveUp && moveDown) { // thrust reverse
+		currentSpeed -= 0.01;
 	}
+	
+	// keep speed within bounds
+	if (currentSpeed > 0.25) {
+		currentSpeed = 0.25;
+	}
+	if (currentSpeed < -0.1) {
+		currentSpeed = -0.1;
+	}
+	
+	// move the ship
+	origin.position.x = origin.position.x + Math.sin(origin.rotation.z) * -currentSpeed;
+	origin.position.y = origin.position.y + Math.cos(origin.rotation.z) * currentSpeed;
+	
+	// ship rotation
 	if (moveLeft && !moveRight) { // rotate left
 		origin.rotation.z -= 0.1;
 	}
+	
 	if (!moveLeft && moveRight) { // rotate right
 		origin.rotation.z += 0.1;
 		
 	}
+	
+	// keep rotation within bounds
 	if (origin.rotation.z > Math.PI * 2) {
 		origin.rotation.z = 0;
 	} else if (origin.rotation.z < 0) {
@@ -222,13 +239,20 @@ window.addEventListener("resize", function() {
 	engine.resize();
 });
 
+function prettyNum(num) {
+	return Math.round(num * 100)/100;
+}
+
 // debug info
 setInterval(function() {
 	debug_txt = '';
-	debug_txt += 'FPS: ' + BABYLON.Tools.GetFps().toPrecision(4) + "\n";
-	debug_txt += 'R: ' + origin.rotation;
+	debug_txt += 'FPS: ' + BABYLON.Tools.GetFps().toPrecision(4) + '<br />';
+	debug_txt += 'X: ' + prettyNum(origin.position.x) + '<br />';
+	debug_txt += 'Y: ' + prettyNum(origin.position.y) + '<br />';
+	debug_txt += 'R: ' + prettyNum(origin.rotation.z) + '<br />';
+	debug_txt += 'S: ' + prettyNum(currentSpeed);
 	debug.innerHTML = debug_txt;
-}, 500);
+}, 100);
 
 </script>
 </body>
