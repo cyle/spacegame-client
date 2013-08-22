@@ -164,6 +164,7 @@ window.addEventListener('keyup', function(e) {
 var boxdir = true; // keep track of the little box's state
 
 // player box info
+var currentThrustingDirection = 0; // 0 = not moving, -1 = backwards, 1 = forwards
 var currentlyThrusting = false;
 var currentSpeed = 0.0;
 var currentRotation = 0.0;
@@ -174,6 +175,10 @@ var accelerationRate = 0.01;
 var actualAccelRate = 0.0;
 var rotationRate = 0.1;
 var rotationThrustRate = 0.1;
+var instantTurnSpeed = 0.03; // speed at which the ship just turns instantly
+var acuteTurnThreshold = degreesToRadians(90); // +/- this number will be an easy "acute" turn
+var wideTurnThreshold = degreesToRadians(140); // between acute and this number will be a hard "wide" turn
+// if the turn is greater than the wide turn threshold, it'll be a 180 turn and it'll require slowing to zero first
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
@@ -210,9 +215,9 @@ scene.registerBeforeRender(function () {
 	
 	// keep rotation within bounds
 	if (origin.rotation.z > Math.PI * 2) {
-		origin.rotation.z = 0;
+		origin.rotation.z = origin.rotation.z - (Math.PI * 2);
 	} else if (origin.rotation.z < 0) {
-		origin.rotation.z = Math.PI * 2;
+		origin.rotation.z = (Math.PI * 2) - origin.rotation.z;
 	}
 	
 	// thrust forward / reverse
@@ -220,14 +225,15 @@ scene.registerBeforeRender(function () {
 		currentlyThrusting = true;
 	} else {
 		currentlyThrusting = false;
+		currentThrustingDirection = 0;
 	}
 	
-	// keep speed within bounds
-	if (currentSpeed > maxSpeed) {
-		currentSpeed = maxSpeed;
+	if (moveForward && !moveReverse) { // thrust forward
+		currentThrustingDirection = 1;
 	}
-	if (currentSpeed < minSpeed) {
-		currentSpeed = minSpeed;
+	
+	if (!moveForward && moveReverse) { // thrust reverse
+		currentThrustingDirection = -1;
 	}
 	
 	currentRotation = origin.rotation.z;
@@ -249,12 +255,11 @@ scene.registerBeforeRender(function () {
 		if (angleDiff > Math.PI) {
 			angleDiff = (Math.PI * 2) - angleDiff;
 		}
-		console.log('angle diff between current moving and facing: ' + angleDiff + '/' + Math.PI);
-		console.log('percent diff: ' + Math.round((angleDiff / Math.PI) * 100) );
+		
+		//console.log('angle diff between current moving and facing: ' + angleDiff + '/' + Math.PI);
+		//console.log('percent diff: ' + Math.round((angleDiff / Math.PI) * 100) );
 		
 		/*
-		
-		ugh, what the fuuuuuuck
 		
 		what to do:
 		
@@ -281,35 +286,116 @@ scene.registerBeforeRender(function () {
 		
 		*/
 		
-		//movingRotation += currentRotation/10;
-		//movingRotation = currentRotation + (angleDiff * (angleDiff / Math.PI)); // what????
-		movingRotation = currentRotation;
-		actualAccelRate = accelerationRate;
-		
-		if (moveForward && !moveReverse) { // thrust forward
-			currentSpeed += actualAccelRate;
-		}
-		
-		if (!moveForward && moveReverse) { // thrust reverse
-			currentSpeed -= actualAccelRate;
+		// if the ship is moving slowly, just turn
+		if (currentSpeed <= instantTurnSpeed) {
+			
+			console.log('moving slowly, just go the new direction');
+			
+			movingRotation = currentRotation;
+			currentSpeed += accelerationRate * currentThrustingDirection;
+			
+		} else { // otherwise, use the above acute/wide/180 degree turn rules
+			
+			// if the new angle (currentRotation) is within the acuteTurnThreshold, slow down acceleration a little and increment the movingRotation at normal speed
+			// if the new angle (currentRotation) is higher than the acuteTurnThreshold but less than the wideTurnThreshold, slow down accelerate and increment the movingRotation slowly
+			// if the new angle (currentRotation) is higher than the wideTurnThreshold, slowly accelerate in the new direction
+			
+			if (angleDiff <= acuteTurnThreshold) {
+				// acute turn, easy
+				
+				//console.log('performing an ACUTE turn');
+				
+				// ok, this part is tricky because of how (Math.PI * 2) radians == 0 radians, or rather, 360 degrees == 0 degrees
+				// so when turning, for example, from currentRotation = 290 to currentRotation = 25,
+				//   we don't want to have to go all the way from 290 to 25...
+				//   we want to go from 290 to 360 and then from 0 to 25
+				// this is repeated in the "wide turn" section
+				if (currentRotation <= (Math.PI * 2) && currentRotation >= (Math.PI * 2 - acuteTurnThreshold) && movingRotation >= 0 && movingRotation <= acuteTurnThreshold) {
+					movingRotation -= rotationThrustRate;
+					if (movingRotation <= 0) {
+						movingRotation = Math.PI * 2;
+					}
+				} else if (movingRotation <= (Math.PI * 2) && movingRotation >= (Math.PI * 2 - acuteTurnThreshold) && currentRotation >= 0 && currentRotation <= acuteTurnThreshold) {
+					movingRotation += rotationThrustRate;
+					if (movingRotation >= Math.PI * 2) {
+						movingRotation = 0;
+					}
+				} else {
+					if (currentRotation > movingRotation) {
+						movingRotation += rotationThrustRate;
+					} else if (currentRotation < movingRotation) {
+						movingRotation -= rotationThrustRate;
+					}
+				}
+				
+				if (angleDiff < (Math.PI/2)) {
+					currentSpeed += accelerationRate * currentThrustingDirection;
+				} else {
+					currentSpeed -= accelerationRate * currentThrustingDirection;
+				}
+				
+			} else if (angleDiff > acuteTurnThreshold && angleDiff <= wideTurnThreshold) {
+				// wide turn, medium
+				
+				//console.log('performing a WIDE turn');
+				
+				if (currentRotation <= (Math.PI * 2) && currentRotation >= (Math.PI * 2 - wideTurnThreshold) && movingRotation >= 0 && movingRotation <= wideTurnThreshold) {
+					movingRotation -= rotationThrustRate;
+					if (movingRotation <= 0) {
+						movingRotation = Math.PI * 2;
+					}
+				} else if (movingRotation <= (Math.PI * 2) && movingRotation >= (Math.PI * 2 - wideTurnThreshold) && currentRotation >= 0 && currentRotation <= wideTurnThreshold) {
+					movingRotation += rotationThrustRate;
+					if (movingRotation >= Math.PI * 2) {
+						movingRotation = 0;
+					}
+				} else {
+					if (currentRotation > movingRotation) {
+						movingRotation += rotationThrustRate;
+					} else if (currentRotation < movingRotation) {
+						movingRotation -= rotationThrustRate;
+					}
+				}
+				
+				if (angleDiff < (Math.PI/2)) {
+					currentSpeed += (accelerationRate * 0.5) * currentThrustingDirection;
+				} else {
+					currentSpeed -= (accelerationRate * 0.5) * currentThrustingDirection;
+				}
+				
+			} else {
+				// full 180 turn, hard
+				
+				//console.log('performing a 180-DEGREE turn');
+				
+				if (currentSpeed > 0) { // slow down to 0 speed before continuing before continuing along the new angle
+					currentSpeed -= (accelerationRate * 0.25) * currentThrustingDirection;
+				} else if (currentSpeed < 0) { // speed up to 0 speed before continuing along the new angle
+					currentSpeed += (accelerationRate * 0.25) * currentThrustingDirection;
+				}
+			}
+			
 		}
 		
 	} else if (movingRotation == currentRotation && currentlyThrusting) { // we are just moving straight ahead
 		
-		// accelerate!
-		
-		if (moveForward && !moveReverse) { // thrust forward
-			currentSpeed += accelerationRate;
-		}
-		
-		if (!moveForward && moveReverse) { // thrust reverse
-			currentSpeed -= accelerationRate;
-		}
+		// just accelerate!
+		//console.log('no turning, just accelerating');
+		currentSpeed += accelerationRate * currentThrustingDirection;
 		
 	} else {
 		
 		// we are not thrusting, so just keep moving straight at the same speed
+		//console.log('not thrusting, just cruising');
 		
+	}
+	
+	// keep speed within bounds
+	if (currentSpeed > maxSpeed) {
+		currentSpeed = maxSpeed;
+	}
+	if (currentSpeed < minSpeed) {
+		currentSpeed = minSpeed;
 	}
 	
 	// move the ship
@@ -360,7 +446,9 @@ setInterval(function() {
 	debug_txt += 'Y: ' + prettyNum(origin.position.y) + '<br />';
 	debug_txt += 'mR: ' + prettyNum(movingRotation) + '<br />';
 	debug_txt += 'cR: ' + prettyNum(currentRotation) + '<br />';
-	debug_txt += 'S: ' + prettyNum(currentSpeed);
+	debug_txt += 'S: ' + prettyNum(currentSpeed) + '<br />';
+	debug_txt += 'CamA: ' + prettyNum(camera.alpha) + '<br />';
+	debug_txt += 'CamB: ' + prettyNum(camera.beta) + '<br />';
 	debug.innerHTML = debug_txt;
 }, 100);
 
