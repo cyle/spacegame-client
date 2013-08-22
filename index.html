@@ -32,6 +32,14 @@ html, body, div, canvas {
 <!-- <script src="hand-1.1.1.js"></script> -->
 <script>
 
+function degreesToRadians(degrees) {
+	return degrees * (Math.PI/180);
+}
+
+function randomFromInterval(from, to) {
+    return Math.floor(Math.random() * (to-from+1) + from);
+}
+
 // get the debug element
 var debug = document.getElementById("debug");
 
@@ -85,6 +93,14 @@ var plane = BABYLON.Mesh.CreatePlane("Plane", 50.0, scene);
 plane.position = new BABYLON.Vector3(0, 0, -30);
 plane.rotation.y = -Math.PI;
 
+for (i = 0; i < 200; i++) {
+	// just create random crap in the background
+	var newcrap = BABYLON.Mesh.CreateSphere("crap "+i, 3, 0.5, scene);
+	newcrap.position.x = randomFromInterval(-100, 100);
+	newcrap.position.y = randomFromInterval(-100, 100);
+	newcrap.position.z = -4;
+}
+
 // cylinder: name, height, diameter, segments (detail), scene to add it to, whether it's updatable
 var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
 cylinder.position = new BABYLON.Vector3(0,-5,0);
@@ -117,6 +133,9 @@ window.addEventListener('keydown', function(e) {
 		case 83: // s
 		moveReverse = true;
 		break;
+		case 67: // c
+		camera.alpha = Math.PI / 2;
+		camera.beta = Math.PI / 2;
 		default:
 		//console.log('key pressed: ' + e.keyCode);
 	}
