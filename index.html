@@ -289,7 +289,7 @@ scene.registerBeforeRender(function () {
 		// if the ship is moving slowly, just turn
 		if (currentSpeed <= instantTurnSpeed) {
 			
-			console.log('moving slowly, just go the new direction');
+			//console.log('moving slowly, just go the new direction');
 			
 			movingRotation = currentRotation;
 			currentSpeed += accelerationRate * currentThrustingDirection;
@@ -340,20 +340,20 @@ scene.registerBeforeRender(function () {
 				//console.log('performing a WIDE turn');
 				
 				if (currentRotation <= (Math.PI * 2) && currentRotation >= (Math.PI * 2 - wideTurnThreshold) && movingRotation >= 0 && movingRotation <= wideTurnThreshold) {
-					movingRotation -= rotationThrustRate;
+					movingRotation -= rotationThrustRate * 0.5;
 					if (movingRotation <= 0) {
 						movingRotation = Math.PI * 2;
 					}
 				} else if (movingRotation <= (Math.PI * 2) && movingRotation >= (Math.PI * 2 - wideTurnThreshold) && currentRotation >= 0 && currentRotation <= wideTurnThreshold) {
-					movingRotation += rotationThrustRate;
+					movingRotation += rotationThrustRate * 0.5;
 					if (movingRotation >= Math.PI * 2) {
 						movingRotation = 0;
 					}
 				} else {
 					if (currentRotation > movingRotation) {
-						movingRotation += rotationThrustRate;
+						movingRotation += rotationThrustRate * 0.5;
 					} else if (currentRotation < movingRotation) {
-						movingRotation -= rotationThrustRate;
+						movingRotation -= rotationThrustRate * 0.5;
 					}
 				}
 				
