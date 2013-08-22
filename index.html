@@ -51,10 +51,10 @@ var scene = new BABYLON.Scene(engine);
 
 // Creating a camera looking to the zero point (0,0,0)
 // arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
-var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 15, new BABYLON.Vector3(0, 0, 0), scene);
+var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 25, new BABYLON.Vector3(0, 0, 0), scene);
 // constrain the camera
 camera.lowerRadiusLimit = 10;
-camera.upperRadiusLimit = 20;
+camera.upperRadiusLimit = 50;
 camera.lowerAlphaLimit = Math.PI * 0.33;
 camera.upperAlphaLimit = Math.PI * 0.66;
 camera.lowerBetaLimit = Math.PI * 0.33;
@@ -118,6 +118,7 @@ var moveReverse = false;
 var rotateLeft = false;
 var rotateRight = false;
 
+// key code reference: http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
 // listen for keys going down, register them as movement
 window.addEventListener('keydown', function(e) {
 	switch (e.keyCode) {
