@@ -445,6 +445,7 @@ scene.registerBeforeRender(function () {
 	
 	// origin sphere's normal color...
 	origin.material.emissiveColor = new BABYLON.Color4(0, 0, 0, 1);
+	origin.material.alpha = 1.0;
 	
 	// only do collision detection if we are not at the very start of the origin
 	if (origin.position.x != 0 || origin.position.y != 0) {
@@ -455,10 +456,14 @@ scene.registerBeforeRender(function () {
 			if (scene.meshes[i].hasOwnProperty('collideWith') && scene.meshes[i].collideWith == true) {
 				if (origin.intersectsMesh(scene.meshes[i], true)) {
 					// turn the origin box blue if it collides with something
-					origin.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 					if (scene.meshes[i].hasOwnProperty('solid') && scene.meshes[i].solid == true) {
+						origin.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 						collided = true;
 						break;
+					} else if (scene.meshes[i].hasOwnProperty('nebula') && scene.meshes[i].nebula == true) {
+						origin.material.alpha = 0.15;
+					} else if (scene.meshes[i].hasOwnProperty('safeZone') && scene.meshes[i].safeZone == true) {
+						origin.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
 					}
 				}
 			}
