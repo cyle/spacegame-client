@@ -111,11 +111,6 @@ camera.upperBetaLimit = Math.PI * 0.66;
 // create a fill light
 var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(25, 25, 25), scene);
 
-// objects are at 0, 0, 0 by default, unless you specify otherwise after calling them
-//var origin = BABYLON.Mesh.CreateSphere("origin", 10, 1.0, scene);
-var origin = BABYLON.Mesh.CreateBox("origin", 1.0, scene);
-origin.material = new BABYLON.StandardMaterial("origin-material", scene);
-
 // box: name, size of box, scene to add it to
 var box = BABYLON.Mesh.CreateBox("Box", 4.0, scene);
 box.position = new BABYLON.Vector3(-25,0,0);
@@ -189,9 +184,6 @@ for (i = 0; i < 100; i++) {
 	//newcrap.position.z = 0;
 }
 
-// a test object thing
-var textBox = new TestObject(0, 0, scene);
-
 // Attach the camera to the scene
 scene.activeCamera.attachControl(canvas);
 
@@ -201,23 +193,8 @@ var moveReverse = false;
 var rotateLeft = false;
 var rotateRight = false;
 
-// player box info
-var currentThrustingDirection = 0; // 0 = not moving, -1 = backwards, 1 = forwards
-var currentlyThrusting = false;
-var currentSpeed = 0.0;
-var currentRotation = 0.0;
-var movingRotation = 0.0;
-var oppositeMovingAngle = 0.0;
-var maxSpeed = 0.2;
-var minSpeed = -0.1;
-var accelerationRate = 0.01;
-var actualAccelRate = 0.0;
-var rotationRate = 0.1;
-var rotationThrustRate = 0.1;
-var instantTurnSpeed = 0.03; // speed at which the ship just turns instantly
-var acuteTurnThreshold = degreesToRadians(90); // +/- this number will be an easy "acute" turn
-var wideTurnThreshold = degreesToRadians(140); // between acute and this number will be a hard "wide" turn
-// if the turn is greater than the wide turn threshold, it'll be a 180 turn and it'll require slowing to zero first
+// create the player ship
+var playerShip = new SpaceShip(0, 0, scene);
 
 // key code reference: http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
 // listen for keys going down, register them as movement
@@ -241,6 +218,7 @@ window.addEventListener('keydown', function(e) {
 		break;
 		case 77: // m
 		console.log(scene.meshes);
+		//console.log(playerShip.objects);
 		break;
 		default:
 		//console.log('key pressed: ' + e.keyCode);
@@ -272,9 +250,6 @@ var boxdir = true; // keep track of the little box's state
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
 	
-	// test
-	textBox.update();
-	
 	// move the little box back and forth
 	//console.log(box2.position.y);
 	if (boxdir == true && box2.position.y > -10) {
@@ -298,238 +273,33 @@ scene.registerBeforeRender(function () {
 	
 	// ship rotation
 	if (rotateLeft && !rotateRight) { // rotate left
-		origin.rotation.z -= rotationRate;
+		playerShip.rotate(-1);
 	}
 	
 	if (!rotateLeft && rotateRight) { // rotate right
-		origin.rotation.z += rotationRate;
-	}
-	
-	// keep rotation within bounds
-	if (origin.rotation.z > Math.PI * 2) {
-		origin.rotation.z = origin.rotation.z - (Math.PI * 2);
-	} else if (origin.rotation.z < 0) {
-		origin.rotation.z = (Math.PI * 2) - origin.rotation.z;
+		playerShip.rotate(1);
 	}
 	
 	// thrust forward / reverse
 	if (moveForward || moveReverse) { // thrust forward
-		currentlyThrusting = true;
+		if (moveForward && !moveReverse) { // thrust forward
+			playerShip.setDirection(1);
+		}
+		if (!moveForward && moveReverse) { // thrust reverse
+			playerShip.setDirection(-1);
+		}
 	} else {
-		currentlyThrusting = false;
-		currentThrustingDirection = 0;
+		playerShip.setDirection(0);
 	}
 	
-	if (moveForward && !moveReverse) { // thrust forward
-		currentThrustingDirection = 1;
-	}
+	playerShip.update();
+		
+	playerShip.checkCollisions(scene);
 	
-	if (!moveForward && moveReverse) { // thrust reverse
-		currentThrustingDirection = -1;
-	}
+	// have the camera move based on the player ship
+	camera.target.x = playerShip.x;
+	camera.target.y = playerShip.y;
 	
-	currentRotation = origin.rotation.z;
-	
-	// get the opposite angle to how we are currently moving
-	if (movingRotation <= Math.PI * 2 && movingRotation > Math.PI) {
-		oppositeMovingAngle = movingRotation - Math.PI;
-	} else {
-		oppositeMovingAngle = movingRotation + Math.PI;
-	}
-	//console.log('opposite angle to how we are moving: ' + oppositeMovingAngle);
-	
-	// if we are thrusting in a direction, try to move along the ship's current rotation
-	if (movingRotation != currentRotation && currentlyThrusting) {
-		
-		// get the difference between how we are moving and how we want to move
-		var angleDiff = Math.abs(movingRotation - currentRotation);
-		if (angleDiff > Math.PI) {
-			angleDiff = (Math.PI * 2) - angleDiff;
-		}
-		
-		//console.log('angle diff between current moving and facing: ' + angleDiff + '/' + Math.PI);
-		//console.log('percent diff: ' + Math.round((angleDiff / Math.PI) * 100) );
-		
-		/*
-		
-		what to do:
-		
-		- if the new angle (current facing direction) is near a 180-degree turn, (WIDE TURN THRESHOLD)
-			make the ship slow til it reaches 0 and then accelerate in the new direction
-		- if the new angle is within the 90-degree cone of where you were moving, (ACUTE TURN THRESHOLD)
-			make the ship slow down a tiny bit til it reaches the new angle
-		- if the new angle is not a full 180, but over the 90-degree cone, (REGULAR TURN THRESHOLD)
-			make the ship slow down a little and then accelerate as usual
-		
-		*/
-		
-		
-		/*
-		
-		measurements...
-		relative direction, PI, degrees, radians
-		
-		STRAIGHT AHEAD = PI * 0 or 0 degrees or 0 radians
-		RIGHT = PI * 0.5 or 90 degrees or ~1.57 radians
-		BACKWARDS = PI * 1 or 180 degrees or ~3.14 radians
-		LEFT = PI * 1.25 or 270 degrees or ~3.93 radians
-		FULL CIRCLE = PI * 2 or 360 degrees or ~6.28 radians
-		
-		*/
-		
-		// if the ship is moving slowly, just turn
-		if (currentSpeed <= instantTurnSpeed) {
-			
-			//console.log('moving slowly, just go the new direction');
-			
-			movingRotation = currentRotation;
-			currentSpeed += accelerationRate * currentThrustingDirection;
-			
-		} else { // otherwise, use the above acute/wide/180 degree turn rules
-			
-			// if the new angle (currentRotation) is within the acuteTurnThreshold, slow down acceleration a little and increment the movingRotation at normal speed
-			// if the new angle (currentRotation) is higher than the acuteTurnThreshold but less than the wideTurnThreshold, slow down accelerate and increment the movingRotation slowly
-			// if the new angle (currentRotation) is higher than the wideTurnThreshold, slowly accelerate in the new direction
-			
-			if (angleDiff <= acuteTurnThreshold) {
-				// acute turn, easy
-				
-				//console.log('performing an ACUTE turn');
-				
-				// ok, this part is tricky because of how (Math.PI * 2) radians == 0 radians, or rather, 360 degrees == 0 degrees
-				// so when turning, for example, from currentRotation = 290 to currentRotation = 25,
-				//   we don't want to have to go all the way from 290 to 25...
-				//   we want to go from 290 to 360 and then from 0 to 25
-				// this is repeated in the "wide turn" section
-				if (currentRotation <= (Math.PI * 2) && currentRotation >= (Math.PI * 2 - acuteTurnThreshold) && movingRotation >= 0 && movingRotation <= acuteTurnThreshold) {
-					movingRotation -= rotationThrustRate;
-					if (movingRotation <= 0) {
-						movingRotation = Math.PI * 2;
-					}
-				} else if (movingRotation <= (Math.PI * 2) && movingRotation >= (Math.PI * 2 - acuteTurnThreshold) && currentRotation >= 0 && currentRotation <= acuteTurnThreshold) {
-					movingRotation += rotationThrustRate;
-					if (movingRotation >= Math.PI * 2) {
-						movingRotation = 0;
-					}
-				} else {
-					if (currentRotation > movingRotation) {
-						movingRotation += rotationThrustRate;
-					} else if (currentRotation < movingRotation) {
-						movingRotation -= rotationThrustRate;
-					}
-				}
-				
-				if (angleDiff < (Math.PI/2)) {
-					currentSpeed += accelerationRate * currentThrustingDirection;
-				} else {
-					currentSpeed -= accelerationRate * currentThrustingDirection;
-				}
-				
-			} else if (angleDiff > acuteTurnThreshold && angleDiff <= wideTurnThreshold) {
-				// wide turn, medium
-				
-				//console.log('performing a WIDE turn');
-				
-				if (currentRotation <= (Math.PI * 2) && currentRotation >= (Math.PI * 2 - wideTurnThreshold) && movingRotation >= 0 && movingRotation <= wideTurnThreshold) {
-					movingRotation -= rotationThrustRate * 0.5;
-					if (movingRotation <= 0) {
-						movingRotation = Math.PI * 2;
-					}
-				} else if (movingRotation <= (Math.PI * 2) && movingRotation >= (Math.PI * 2 - wideTurnThreshold) && currentRotation >= 0 && currentRotation <= wideTurnThreshold) {
-					movingRotation += rotationThrustRate * 0.5;
-					if (movingRotation >= Math.PI * 2) {
-						movingRotation = 0;
-					}
-				} else {
-					if (currentRotation > movingRotation) {
-						movingRotation += rotationThrustRate * 0.5;
-					} else if (currentRotation < movingRotation) {
-						movingRotation -= rotationThrustRate * 0.5;
-					}
-				}
-				
-				if (angleDiff < (Math.PI/2)) {
-					currentSpeed += (accelerationRate * 0.5) * currentThrustingDirection;
-				} else {
-					currentSpeed -= (accelerationRate * 0.5) * currentThrustingDirection;
-				}
-				
-			} else {
-				// full 180 turn, hard
-				
-				//console.log('performing a 180-DEGREE turn');
-				
-				if (currentSpeed > 0) { // slow down to 0 speed before continuing before continuing along the new angle
-					currentSpeed -= (accelerationRate * 0.25) * currentThrustingDirection;
-				} else if (currentSpeed < 0) { // speed up to 0 speed before continuing along the new angle
-					currentSpeed += (accelerationRate * 0.25) * currentThrustingDirection;
-				}
-			}
-			
-		}
-		
-	} else if (movingRotation == currentRotation && currentlyThrusting) { // we are just moving straight ahead
-		
-		// just accelerate!
-		//console.log('no turning, just accelerating');
-		currentSpeed += accelerationRate * currentThrustingDirection;
-		
-	} else {
-		
-		// we are not thrusting, so just keep moving straight at the same speed
-		//console.log('not thrusting, just cruising');
-		
-	}
-	
-	// keep speed within bounds
-	if (currentSpeed > maxSpeed) {
-		currentSpeed = maxSpeed;
-	}
-	if (currentSpeed < minSpeed) {
-		currentSpeed = minSpeed;
-	}
-	
-	// move the ship
-	origin.position.x = origin.position.x + Math.sin(movingRotation) * -currentSpeed;
-	origin.position.y = origin.position.y + Math.cos(movingRotation) * currentSpeed;
-	
-	// origin sphere's normal color...
-	origin.material.emissiveColor = new BABYLON.Color4(0, 0, 0, 1);
-	origin.material.alpha = 1.0;
-	
-	// only do collision detection if we are not at the very start of the origin
-	if (origin.position.x != 0 || origin.position.y != 0) {
-		// has there been a collision...?
-		var collided = false;
-		
-		for (i = 0; i < scene.meshes.length; i++) {
-			if (scene.meshes[i].hasOwnProperty('collideWith') && scene.meshes[i].collideWith == true) {
-				if (origin.intersectsMesh(scene.meshes[i], true)) {
-					// turn the origin box blue if it collides with something
-					if (scene.meshes[i].hasOwnProperty('solid') && scene.meshes[i].solid == true) {
-						origin.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-						collided = true;
-						break;
-					} else if (scene.meshes[i].hasOwnProperty('nebula') && scene.meshes[i].nebula == true) {
-						origin.material.alpha = 0.15;
-					} else if (scene.meshes[i].hasOwnProperty('safeZone') && scene.meshes[i].safeZone == true) {
-						origin.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
-					}
-				}
-			}
-		}
-		
-		if (collided) {
-			console.log('collided with solid object');
-			movingRotation = oppositeMovingAngle;
-			currentSpeed = currentSpeed * 0.5;
-			origin.position.x = origin.position.x + Math.sin(movingRotation) * -0.5;
-			origin.position.y = origin.position.y + Math.cos(movingRotation) * 0.5;
-		}
-	}
-	
-	// have the camera move based on the origin sphere
-	camera.target = origin.position;
 	// have the light follow the camera
 	//light.position = camera.position;
 	
@@ -555,11 +325,11 @@ function prettyNum(num) {
 setInterval(function() {
 	debug_txt = '';
 	debug_txt += 'FPS: ' + BABYLON.Tools.GetFps().toPrecision(4) + '<br />';
-	debug_txt += 'X: ' + prettyNum(origin.position.x) + '<br />';
-	debug_txt += 'Y: ' + prettyNum(origin.position.y) + '<br />';
-	debug_txt += 'mR: ' + prettyNum(movingRotation) + '<br />';
-	debug_txt += 'cR: ' + prettyNum(currentRotation) + '<br />';
-	debug_txt += 'S: ' + prettyNum(currentSpeed) + '<br />';
+	debug_txt += 'X: ' + prettyNum(playerShip.x) + '<br />';
+	debug_txt += 'Y: ' + prettyNum(playerShip.y) + '<br />';
+	debug_txt += 'mR: ' + prettyNum(playerShip.movingRotation) + '<br />';
+	debug_txt += 'cR: ' + prettyNum(playerShip.currentRotation) + '<br />';
+	debug_txt += 'S: ' + prettyNum(playerShip.currentSpeed) + '<br />';
 	debug_txt += 'CamA: ' + prettyNum(camera.alpha) + '<br />';
 	debug_txt += 'CamB: ' + prettyNum(camera.beta) + '<br />';
 	debug.innerHTML = debug_txt;
