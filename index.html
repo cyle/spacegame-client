@@ -28,8 +28,8 @@ html, body, div, canvas {
 <body>
 <div id="debug"></div>
 <div id="root"><canvas id="render"></canvas></div>
-
-
+<!-- look at all of this babylon crap -->
+<!-- <script src="hand-1.1.1.js"></script> -->
 <script src="Babylon/Tools/babylon.math.js"></script>
 <script src="Babylon/Tools/babylon.tools.js"></script>
 <script src="Babylon/babylon.engine.js"></script>
@@ -72,11 +72,9 @@ html, body, div, canvas {
 <script src="Babylon/Animations/babylon.animatable.js"></script>
 <script src="Babylon/Culling/Octrees/babylon.octree.js"></script>
 <script src="Babylon/Culling/Octrees/babylon.octreeBlock.js"></script>
-
-
-
+<!-- custom stuff -->
 <script src="babylon.cyle.js"></script>
-<!-- <script src="hand-1.1.1.js"></script> -->
+<script src="spacegame.classes.js"></script>
 <script>
 
 function degreesToRadians(degrees) {
@@ -191,6 +189,9 @@ for (i = 0; i < 100; i++) {
 	//newcrap.position.z = 0;
 }
 
+// a test object thing
+var textBox = new TestObject(0, 0, scene);
+
 // Attach the camera to the scene
 scene.activeCamera.attachControl(canvas);
 
@@ -270,6 +271,9 @@ var boxdir = true; // keep track of the little box's state
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
+	
+	// test
+	textBox.update();
 	
 	// move the little box back and forth
 	//console.log(box2.position.y);
