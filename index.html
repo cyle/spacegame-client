@@ -74,46 +74,67 @@ origin.material = new BABYLON.StandardMaterial("origin-material", scene);
 
 // box: name, size of box, scene to add it to
 var box = BABYLON.Mesh.CreateBox("Box", 4.0, scene);
-box.position = new BABYLON.Vector3(-5,0,0);
+box.position = new BABYLON.Vector3(-25,0,0);
 box.rotation.x = Math.PI/3;
 box.rotation.y = -Math.PI/3;
 box.rotation.z = Math.PI/5;
-
-//var safebox = BABYLON.Mesh.CreateBox("Safe Zone", 10.0, scene);
-var safebox = BABYLON.Mesh.CreateRect("Safe Zone", 10, 20, 5, scene);
-safebox.position = new BABYLON.Vector3(-15,15,0);
-safebox.collideWith = true;
-safebox.material = new BABYLON.StandardMaterial("texture", scene);
-safebox.material.wireframe = true;
-
-// create a littler box
+// create a littler box, which will interact with the big box
 var box2 = BABYLON.Mesh.CreateBox("Box2", 3.0, scene);
 box2.parent = box;
 box2.position.y = 10;
 box2.material = new BABYLON.StandardMaterial("box2-material", scene);
 
+// flat plane: name, size of plane, scene to add it to
+var plane = BABYLON.Mesh.CreatePlane("Plane", 200.0, scene);
+plane.position = new BABYLON.Vector3(0, 0, -8);
+plane.rotation.y = -Math.PI;
+
 // sphere: name, segments (detail), size, scene to add it to
 var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
-sphere.position = new BABYLON.Vector3(5,0,0);
+sphere.position = new BABYLON.Vector3(15,0,0);
 sphere.collideWith = true;
 sphere.material = new BABYLON.StandardMaterial("texture", scene);
 sphere.material.wireframe = true;
 
-// flat plane: name, size of plane, scene to add it to
-var plane = BABYLON.Mesh.CreatePlane("Plane", 50.0, scene);
-plane.position = new BABYLON.Vector3(0, 0, -30);
-plane.rotation.y = -Math.PI;
+// cylinder: name, height, diameter, segments (detail), scene to add it to, whether it's updatable
+var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
+cylinder.position = new BABYLON.Vector3(15,5,0);
 
+// torus: name, diameter, thickness, segments (detail), scene to add it to, whether it's updatable
+var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 20, scene, false);
+torus.position = new BABYLON.Vector3(15,10,0);
+
+
+
+
+// make a "safe box", used later
+var safebox = BABYLON.Mesh.CreateRect("Safe Zone", 10, 20, 5, scene);
+safebox.position = new BABYLON.Vector3(-15,15,0);
+safebox.collideWith = true;
+safebox.safeZone = true;
+safebox.material = new BABYLON.StandardMaterial("texture", scene);
+safebox.material.wireframe = true;
+
+// make a "nebula box", used later
+var nebulabox = BABYLON.Mesh.CreateRect("Nebula", 10, 20, 5, scene);
+nebulabox.position = new BABYLON.Vector3(-15,-15,0);
+nebulabox.collideWith = true;
+nebulabox.nebula = true;
+nebulabox.material = new BABYLON.StandardMaterial("texture", scene);
+nebulabox.material.wireframe = true;
+
+// just create random crap in the background
 for (i = 0; i < 200; i++) {
-	// just create random crap in the background
 	var newcrap = BABYLON.Mesh.CreateSphere("crap "+i, 3, 0.5, scene);
+	newcrap.material = new BABYLON.StandardMaterial("crap-material", scene);
+	newcrap.material.emissiveColor = new BABYLON.Color4(0.2, 0.2, 0.2, 1);
 	newcrap.position.x = randomFromInterval(-100, 100);
 	newcrap.position.y = randomFromInterval(-100, 100);
 	newcrap.position.z = -4;
 }
 
+// add some asteroids
 for (i = 0; i < 100; i++) {
-	// add some asteroids
 	var asteroid = BABYLON.Mesh.CreateSphere("asteroid "+i, 3, 1, scene);
 	asteroid.material = new BABYLON.StandardMaterial("asteroid-material", scene);
 	asteroid.material.emissiveColor = new BABYLON.Color4(0.6, 0.3, 0, 1);
@@ -123,14 +144,6 @@ for (i = 0; i < 100; i++) {
 	asteroid.solid = true;
 	//newcrap.position.z = 0;
 }
-
-// cylinder: name, height, diameter, segments (detail), scene to add it to, whether it's updatable
-var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
-cylinder.position = new BABYLON.Vector3(0,-5,0);
-
-// torus: name, diameter, thickness, segments (detail), scene to add it to, whether it's updatable
-var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 20, scene, false);
-torus.position = new BABYLON.Vector3(0,5,0);
 
 // Attach the camera to the scene
 scene.activeCamera.attachControl(canvas);
