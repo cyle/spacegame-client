@@ -78,6 +78,12 @@ box.rotation.x = Math.PI/3;
 box.rotation.y = -Math.PI/3;
 box.rotation.z = Math.PI/5;
 
+var safebox = BABYLON.Mesh.CreateBox("Safe Zone", 10.0, scene);
+safebox.position = new BABYLON.Vector3(-15,15,0);
+safebox.collideWith = true;
+safebox.material = new BABYLON.StandardMaterial("texture", scene);
+safebox.material.wireframe = true;
+
 // create a littler box
 var box2 = BABYLON.Mesh.CreateBox("Box2", 3.0, scene);
 box2.parent = box;
@@ -88,6 +94,8 @@ box2.material = new BABYLON.StandardMaterial("box2-material", scene);
 var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
 sphere.position = new BABYLON.Vector3(5,0,0);
 sphere.collideWith = true;
+sphere.material = new BABYLON.StandardMaterial("texture", scene);
+sphere.material.wireframe = true;
 
 // flat plane: name, size of plane, scene to add it to
 var plane = BABYLON.Mesh.CreatePlane("Plane", 50.0, scene);
@@ -102,6 +110,18 @@ for (i = 0; i < 200; i++) {
 	newcrap.position.z = -4;
 }
 
+for (i = 0; i < 100; i++) {
+	// add some asteroids
+	var asteroid = BABYLON.Mesh.CreateSphere("asteroid "+i, 3, 1, scene);
+	asteroid.material = new BABYLON.StandardMaterial("asteroid-material", scene);
+	asteroid.material.emissiveColor = new BABYLON.Color4(0.6, 0.3, 0, 1);
+	asteroid.position.x = randomFromInterval(-100, 100);
+	asteroid.position.y = randomFromInterval(-100, 100);
+	asteroid.collideWith = true;
+	asteroid.solid = true;
+	//newcrap.position.z = 0;
+}
+
 // cylinder: name, height, diameter, segments (detail), scene to add it to, whether it's updatable
 var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
 cylinder.position = new BABYLON.Vector3(0,-5,0);
@@ -109,8 +129,6 @@ cylinder.position = new BABYLON.Vector3(0,-5,0);
 // torus: name, diameter, thickness, segments (detail), scene to add it to, whether it's updatable
 var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 20, scene, false);
 torus.position = new BABYLON.Vector3(0,5,0);
-torus.collideWith = true;
-torus.solid = true;
 
 // Attach the camera to the scene
 scene.activeCamera.attachControl(canvas);
@@ -422,7 +440,7 @@ scene.registerBeforeRender(function () {
 			if (scene.meshes[i].hasOwnProperty('collideWith') && scene.meshes[i].collideWith == true) {
 				if (origin.intersectsMesh(scene.meshes[i], true)) {
 					// turn the origin box blue if it collides with something
-					origin.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
+					origin.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 					if (scene.meshes[i].hasOwnProperty('solid') && scene.meshes[i].solid == true) {
 						collided = true;
 						break;
