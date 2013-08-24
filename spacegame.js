@@ -49,6 +49,12 @@ var plane = BABYLON.Mesh.CreatePlane("Plane", 200.0, scene);
 plane.position = new BABYLON.Vector3(0, 0, -8);
 plane.rotation.y = -Math.PI;
 
+var ruler = BABYLON.Mesh.CreatePlane("ruler", 1, scene);
+ruler.position = new BABYLON.Vector3(3, 3, 0);
+ruler.rotation.y = -Math.PI;
+ruler.material = new BABYLON.StandardMaterial("ruler-material", scene);
+ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
+
 // sphere: name, segments (detail), size, scene to add it to
 var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
 sphere.position = new BABYLON.Vector3(15,0,0);
