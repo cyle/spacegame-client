@@ -219,6 +219,7 @@ var moveForward = false;
 var moveReverse = false;
 var rotateLeft = false;
 var rotateRight = false;
+var brake = false;
 
 // create the player ship
 var playerShip = new SpaceShip(0, 0, scene);
@@ -240,9 +241,8 @@ window.addEventListener('keydown', function(e) {
 		case 83: // s
 		moveReverse = true;
 		break;
-		case 67: // c
-		camera.alpha = Math.PI / 2;
-		camera.beta = Math.PI / 2;
+		case 16:
+		brake = true;
 		break;
 		default:
 		//console.log('key pressed: ' + e.keyCode);
@@ -263,6 +263,13 @@ window.addEventListener('keyup', function(e) {
 		break;
 		case 83: // s
 		moveReverse = false;
+		break;
+		case 16:
+		brake = false;
+		break;
+		case 67: // c
+		camera.alpha = Math.PI / 2;
+		camera.beta = Math.PI / 2;
 		break;
 		case 77: // m
 		console.log(scene.meshes);
@@ -324,6 +331,10 @@ scene.registerBeforeRender(function () {
 	} else {
 		playerShip.setDirection(0);
 		document.getElementById('thruster-sound').pause();
+	}
+	
+	if (brake) {
+		playerShip.brake();
 	}
 	
 	playerShip.update();

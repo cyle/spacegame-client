@@ -112,7 +112,7 @@ function SpaceShip(x, y, scene) {
 	this.maxSpeed = 0.2;
 	this.minSpeed = -0.1;
 	this.accelerationRate = 0.01;
-	this.actualAccelRate = 0.0;
+	this.decelerationRate = 0.01;
 	this.rotationRate = 0.1;
 	this.rotationThrustRate = 0.1;
 	this.instantTurnSpeed = 0.03; // speed at which the ship just turns instantly
@@ -184,6 +184,20 @@ SpaceShip.prototype.rotate = function(direction) {
 		this.currentRotation = (Math.PI * 2) - this.currentRotation;
 	}
 	
+}
+
+SpaceShip.prototype.brake = function() {
+	if (this.currentSpeed > 0) {
+		this.currentSpeed -= this.decelerationRate;
+		if (this.currentSpeed < 0) { // deceleration rate took us under zero, oops, fix it
+			this.currentSpeed = 0;
+		}
+	} else if (this.currentSpeed < 0) {
+		this.currentSpeed += this.decelerationRate;
+		if (this.currentSpeed > 0) { // deceleration rate took us over zero, oops, fix it
+			this.currentSpeed = 0;
+		}
+	}
 }
 
 SpaceShip.prototype.setDirection = function(direction) {
