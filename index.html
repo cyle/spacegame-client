@@ -187,6 +187,15 @@ for (i = 0; i < 100; i++) {
 }
 */
 
+BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", scene, function (newMeshes, particleSystems) {
+	//console.log(newMeshes);
+	for (i = 0; i < newMeshes.length; i++) {
+		newMeshes[i].scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
+		newMeshes[i].position = new BABYLON.Vector3(0, 10, 0);
+		newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
+	}
+});
+
 // add an asteroid "area"
 var asteroidFieldX = 50;
 var asteroidFieldY = 50;
