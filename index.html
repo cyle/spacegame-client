@@ -28,6 +28,8 @@ html, body, div, canvas {
 <body>
 <div id="debug"></div>
 <div id="root"><canvas id="render"></canvas></div>
+<audio id="thruster-sound" src="audio/thruster.wav" loop="loop" preload="auto"></audio>
+<audio id="blaster-sound" src="audio/blaster.wav" preload="auto"></audio>
 <!-- look at all of this babylon crap -->
 <!-- <script src="hand-1.1.1.js"></script> -->
 <script src="Babylon/Tools/babylon.math.js"></script>
@@ -268,6 +270,7 @@ window.addEventListener('keyup', function(e) {
 		break;
 		case 32: // space bar
 		bullets.push( new Bullet( playerShip.x, playerShip.y, playerShip.currentRotation, scene ) );
+		document.getElementById('blaster-sound').play();
 		break;
 		default:
 		//console.log('key released: ' + e.keyCode);
@@ -310,7 +313,8 @@ scene.registerBeforeRender(function () {
 	}
 	
 	// thrust forward / reverse
-	if (moveForward || moveReverse) { // thrust forward
+	if (moveForward || moveReverse) { // thrusting
+		document.getElementById('thruster-sound').play();
 		if (moveForward && !moveReverse) { // thrust forward
 			playerShip.setDirection(1);
 		}
@@ -319,6 +323,7 @@ scene.registerBeforeRender(function () {
 		}
 	} else {
 		playerShip.setDirection(0);
+		document.getElementById('thruster-sound').pause();
 	}
 	
 	playerShip.update();
