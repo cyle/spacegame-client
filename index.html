@@ -152,6 +152,7 @@ safebox.position = new BABYLON.Vector3(-15,15,0);
 safebox.collideWith = true;
 safebox.safeZone = true;
 safebox.material = new BABYLON.StandardMaterial("texture", scene);
+safebox.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
 safebox.material.wireframe = true;
 
 // make a "nebula box", used later
@@ -160,6 +161,7 @@ nebulabox.position = new BABYLON.Vector3(-15,-15,0);
 nebulabox.collideWith = true;
 nebulabox.nebula = true;
 nebulabox.material = new BABYLON.StandardMaterial("texture", scene);
+nebulabox.material.emissiveColor = new BABYLON.Color4(0.5, 0.0, 0.5, 1);
 nebulabox.material.wireframe = true;
 
 // just create random crap in the background
@@ -173,6 +175,7 @@ for (i = 0; i < 200; i++) {
 }
 
 // add some asteroids
+/*
 for (i = 0; i < 100; i++) {
 	var asteroid = BABYLON.Mesh.CreateSphere("asteroid "+i, 3, 1, scene);
 	asteroid.material = new BABYLON.StandardMaterial("asteroid-material", scene);
@@ -181,7 +184,20 @@ for (i = 0; i < 100; i++) {
 	asteroid.position.y = randomFromInterval(-100, 100);
 	asteroid.collideWith = true;
 	asteroid.solid = true;
-	//newcrap.position.z = 0;
+}
+*/
+
+// add an asteroid "area"
+var asteroidFieldX = 50;
+var asteroidFieldY = 50;
+for (i = 0; i < 100; i++) {
+	var asteroidField = BABYLON.Mesh.CreateSphere("asteroidField "+i, 3, 1, scene);
+	asteroidField.material = new BABYLON.StandardMaterial("asteroid-material", scene);
+	asteroidField.material.emissiveColor = new BABYLON.Color4(0.6, 0.3, 0, 1);
+	asteroidField.position.x = asteroidFieldX + randomFromInterval(-20, 20);
+	asteroidField.position.y = asteroidFieldY + randomFromInterval(-20, 20);
+	asteroidField.collideWith = true;
+	asteroidField.solid = true;
 }
 
 // Attach the camera to the scene
