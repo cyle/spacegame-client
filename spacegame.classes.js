@@ -87,6 +87,58 @@ Bullet.prototype.update = function() {
 }
 
 
+/*
+
+	random other spaceship
+	
+*/
+
+function OtherShip(name, x, y, angle, scene) {
+	
+	// location data
+	this.name = name;
+	this.x = x;
+	this.y = y;
+	this.z = 0.0; // z will probably stay zero foreverrrr
+	this.currentRotation = angle;
+	
+	this.objects = []; // will hold all of the meshes that make up this object
+	
+	// the origin's position is relative to the object's x and y origin
+	var shipOriginBox = BABYLON.Mesh.CreateBox("spaceship-origin", 2.0, scene);
+	shipOriginBox.position = new BABYLON.Vector3(this.x + 0, this.y + 0, 0);
+	shipOriginBox.material = new BABYLON.StandardMaterial("spaceship-material", scene);
+	
+	// add those meshes to this ship's list of objects
+	this.objects.push(shipOriginBox);
+	
+}
+
+OtherShip.prototype.update = function(x, y, angle) {
+	
+	// move just the origin element
+	this.objects[0].position.x = x;
+	this.objects[0].position.y = y;
+	
+	// rotate just the origin element
+	this.objects[0].rotation.z = angle;
+	
+	// update our actual position
+	this.x = this.objects[0].position.x;
+	this.y = this.objects[0].position.y;
+	
+	// update our actual rotation
+	this.currentRotation = angle;
+	
+}
+
+OtherShip.prototype.dispose = function() {
+	if (this.objects[0].isDisposed() == false) {
+		this.objects[0].dispose(); // clear up resources
+	}
+}
+
+
 
 /*
 
@@ -95,7 +147,7 @@ Bullet.prototype.update = function() {
 */
 
 
-function SpaceShip(x, y, scene) {
+function PlayerShip(x, y, scene) {
 	
 	// location data
 	this.x = x;
@@ -120,9 +172,7 @@ function SpaceShip(x, y, scene) {
 	this.wideTurnThreshold = degreesToRadians(140); // between acute and this number will be a hard "wide" turn
 	
 	this.objects = []; // will hold all of the meshes that make up this object
-	
-	// use this material below
-	
+		
 	// the origin's position is relative to the object's x and y origin
 	var shipOriginBox = BABYLON.Mesh.CreateBox("spaceship-origin", 2.0, scene);
 	shipOriginBox.position = new BABYLON.Vector3(this.x + 0, this.y + 0, 0);
@@ -168,7 +218,7 @@ function SpaceShip(x, y, scene) {
 	
 }
 
-SpaceShip.prototype.rotate = function(direction) {
+PlayerShip.prototype.rotate = function(direction) {
 	
 	// rotate left or right based on direction given
 	if (direction < 0) {
@@ -186,7 +236,7 @@ SpaceShip.prototype.rotate = function(direction) {
 	
 }
 
-SpaceShip.prototype.brake = function() {
+PlayerShip.prototype.brake = function() {
 	if (this.currentSpeed > 0) {
 		this.currentSpeed -= this.decelerationRate;
 		if (this.currentSpeed < 0) { // deceleration rate took us under zero, oops, fix it
@@ -200,7 +250,7 @@ SpaceShip.prototype.brake = function() {
 	}
 }
 
-SpaceShip.prototype.setDirection = function(direction) {
+PlayerShip.prototype.setDirection = function(direction) {
 	if (direction < 0) {
 		this.currentlyThrusting = true;
 		this.currentThrustingDirection = -1; // thrusting in reverse
@@ -224,7 +274,7 @@ SpaceShip.prototype.setDirection = function(direction) {
 	}
 }
 
-SpaceShip.prototype.collided = function() {
+PlayerShip.prototype.collided = function() {
 	for (i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
@@ -236,21 +286,21 @@ SpaceShip.prototype.collided = function() {
 	this.objects[0].position.y += Math.cos(this.movingRotation) * 0.5;
 }
 
-SpaceShip.prototype.safeZoned = function() {
+PlayerShip.prototype.safeZoned = function() {
 	for (i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
 	}
 }
 
-SpaceShip.prototype.invisible = function() {
+PlayerShip.prototype.invisible = function() {
 	for (i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.alpha = 0.15;
 	}
 }
 
-SpaceShip.prototype.checkCollisions = function(scene) {
+PlayerShip.prototype.checkCollisions = function(scene) {
 
 	// set normal colors...
 	for (i = 0; i < this.objects.length; i++) {
@@ -291,7 +341,7 @@ SpaceShip.prototype.checkCollisions = function(scene) {
 	}
 }
 
-SpaceShip.prototype.update = function() {
+PlayerShip.prototype.update = function() {
 	// move the position of all objects the same way
 	
 	// rotate just the origin element

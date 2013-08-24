@@ -146,10 +146,74 @@ for (i = 0; i < 100; i++) {
 }
 
 // create the player ship
-var playerShip = new SpaceShip(0, 0, scene);
+var playerShip = new PlayerShip(0, 0, scene);
 
 // create an array to hold the bullet objects
 var bullets = [];
+
+
+/*
+
+	load multiplayer stuff
+
+*/
+
+// this player's name
+var playerName = '';
+
+// create the list of other players
+var players = [];
+
+// open up a socket to the server
+var socket = io.connect('http://localhost:31777');
+
+socket.on('welcome', function(name) {
+	playerName = name;
+});
+
+socket.on('otherPlayers', function(otherPlayers) {
+	console.log(otherPlayers);
+	for (i = 0; i < otherPlayers.length; i++) {
+		if (otherPlayers[i].name == playerName) {
+			continue;
+		}
+		players.push( new OtherShip(otherPlayers[i].name, otherPlayers[i].x, otherPlayers[i].y, otherPlayers[i].angle, scene) );
+	}
+});
+
+socket.on('updatePlayer', function(data) {
+	//console.log('a player moved!');
+	//console.log(data);
+	if (playerName == data.name) {
+		return;
+	}
+	for (i = 0; i < players.length; i++) {
+		if (players[i].name == data.name) {
+			players[i].update(data.x, data.y, data.angle);
+		}
+	}
+});
+
+socket.on('newPlayer', function(data) {
+	//console.log(data);
+	// set up a new other player ship
+	if (data.name == playerName) {
+		return;
+	}
+	console.log('a new player arrived: ' + data.name);
+	players.push( new OtherShip(data.name, data.x, data.y, data.angle, scene) );
+});
+
+socket.on('removePlayer', function(name) {
+	console.log('a player left: ' + name);
+	//console.log(data);
+	for (i = 0; i < players.length; i++) {
+		if (players[i].name == name) {
+			players[i].dispose();
+			players.splice(i, 1);
+		}
+	}
+});
 
 /*
 
@@ -233,6 +297,7 @@ window.addEventListener('keyup', function(e) {
 */
 
 var boxdir = true; // keep track of the little box's state
+var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
@@ -304,6 +369,15 @@ scene.registerBeforeRender(function () {
 	// the camera needs to stay fixed on the player ship
 	camera.target.x = playerShip.x;
 	camera.target.y = playerShip.y;
+	
+	// let the server know our current stuff
+	if (playerLast.x != playerShip.x || playerLast.y != playerShip.y || playerLast.z != playerShip.z || playerLast.angle != playerShip.currentRotation) {
+		socket.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation });
+		playerLast.x = playerShip.x;
+		playerLast.y = playerShip.y;
+		playerLast.z = playerShip.z;
+		playerLast.angle = playerShip.currentRotation;
+	}
 		
 });
 

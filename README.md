@@ -1,4 +1,4 @@
-# SpaceGame (Babylon Edition)
+# SPACE GAME! Client
 
 Just load index.html into Chrome (or any browser that supports WebGL) and play!
 

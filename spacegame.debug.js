@@ -3,6 +3,7 @@ setInterval(function() {
 	var debug = document.getElementById("debug");
 	debug_txt = '';
 	debug_txt += 'FPS: ' + BABYLON.Tools.GetFps().toPrecision(4) + '<br />';
+	debug_txt += 'Name: ' + playerName + '<br />';
 	debug_txt += 'X: ' + prettyNum(playerShip.x) + '<br />';
 	debug_txt += 'Y: ' + prettyNum(playerShip.y) + '<br />';
 	debug_txt += 'mR: ' + prettyNum(playerShip.movingRotation) + '<br />';
