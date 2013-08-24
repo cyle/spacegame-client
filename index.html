@@ -147,7 +147,7 @@ torus.position = new BABYLON.Vector3(15,10,0);
 
 
 // make a "safe box", used later
-var safebox = BABYLON.Mesh.CreateRect("Safe Zone", 10, 20, 5, scene);
+var safebox = BABYLON.Mesh.CreateRect("Safe Zone", 10, 20, 3, scene);
 safebox.position = new BABYLON.Vector3(-15,15,0);
 safebox.collideWith = true;
 safebox.safeZone = true;
@@ -155,7 +155,7 @@ safebox.material = new BABYLON.StandardMaterial("texture", scene);
 safebox.material.wireframe = true;
 
 // make a "nebula box", used later
-var nebulabox = BABYLON.Mesh.CreateRect("Nebula", 10, 20, 5, scene);
+var nebulabox = BABYLON.Mesh.CreateRect("Nebula", 10, 20, 3, scene);
 nebulabox.position = new BABYLON.Vector3(-15,-15,0);
 nebulabox.collideWith = true;
 nebulabox.nebula = true;
@@ -195,6 +195,7 @@ var rotateRight = false;
 
 // create the player ship
 var playerShip = new SpaceShip(0, 0, scene);
+var bullets = [];
 
 // key code reference: http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
 // listen for keys going down, register them as movement
@@ -216,10 +217,6 @@ window.addEventListener('keydown', function(e) {
 		camera.alpha = Math.PI / 2;
 		camera.beta = Math.PI / 2;
 		break;
-		case 77: // m
-		console.log(scene.meshes);
-		//console.log(playerShip.objects);
-		break;
 		default:
 		//console.log('key pressed: ' + e.keyCode);
 	}
@@ -239,6 +236,13 @@ window.addEventListener('keyup', function(e) {
 		break;
 		case 83: // s
 		moveReverse = false;
+		break;
+		case 77: // m
+		console.log(scene.meshes);
+		//console.log(playerShip.objects);
+		break;
+		case 32: // space bar
+		bullets.push( new Bullet( playerShip.x, playerShip.y, playerShip.currentRotation, scene ) );
 		break;
 		default:
 		//console.log('key released: ' + e.keyCode);
@@ -295,6 +299,14 @@ scene.registerBeforeRender(function () {
 	playerShip.update();
 		
 	playerShip.checkCollisions(scene);
+	
+	for (i = 0; i < bullets.length; i++) { // go through the bullets
+		bullets[i].update(); // update!
+		if (bullets[i].done == true) {
+			bullets[i].update(); // run its own cleanup
+			bullets.splice(i, 1); // remove from the array of bullets
+		}
+	}
 	
 	// have the camera move based on the player ship
 	camera.target.x = playerShip.x;

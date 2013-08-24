@@ -45,6 +45,48 @@ TestObject.prototype.update = function() {
 
 
 
+/*
+
+	bullet
+
+*/
+
+function Bullet(x, y, angle, scene) {
+	this.x = x;
+	this.y = y;
+	this.z = 0.0;
+	this.distanceTravelled = 0.0; // how far has it gone so far
+	this.distanceLimit = 30; // when should it stop travelling
+	this.distancePerTick = 0.0; // how many units does it travel per update
+	this.currentSpeed = 0.5; // the speed of it (constant)
+	this.angle = angle; // the angle it's travelling at
+	this.bulletSphere = BABYLON.Mesh.CreateSphere("BULLET", 2.0, 0.25, scene); // the mesh itself
+	this.bulletSphere.position = new BABYLON.Vector3(this.x, this.y, this.z);
+	this.done = false; // has it reached its limit?
+}
+
+Bullet.prototype.update = function() {
+	if (this.done == true) { // if it has reached its limit, dispose of the mesh
+		if (this.bulletSphere.isDisposed() == false) {
+			this.bulletSphere.dispose(); // clear up resources
+		}
+		return; // that's all
+	}
+	// travel:
+	this.x += Math.sin(this.angle) * -this.currentSpeed;
+	this.y += Math.cos(this.angle) * this.currentSpeed;
+	if (this.distancePerTick == 0.0) { // figure out how far it travels per update
+		this.distancePerTick = Math.sqrt( Math.pow(this.x - this.bulletSphere.position.x, 2) + Math.pow(this.y - this.bulletSphere.position.y, 2) );
+	}
+	this.bulletSphere.position.x = this.x; // set the mesh's position
+	this.bulletSphere.position.y = this.y;
+	this.distanceTravelled += this.distancePerTick; // add how far it's gone so far
+	if (this.distanceTravelled >= this.distanceLimit) { // gone far enough?
+		this.done = true; // done, kid
+	}
+}
+
+
 
 /*
 
