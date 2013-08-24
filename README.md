@@ -8,7 +8,7 @@ Note that this will not work on a computer that does not have hardware graphics 
 
 - You can zip around in your blocky spaceship via frictionless Newtonian physics.
 - You can run into asteroids (little brown spheres) and bounce away from them upon collision.
-- You can hide in nebulas (purple boxes).
+- You can hide in nebulae (purple boxes).
 - You can park safely inside safe zones (green boxes).
 - You can shoot straight ahead (though the bullets don't actually do anything yet).
 
