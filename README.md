@@ -4,6 +4,10 @@ Just load index.html into Chrome (or any browser that supports WebGL) and play!
 
 Note that this will not work on a computer that does not have hardware graphics acceleration.
 
+## Important Note
+
+After version 0.0.2, this now requires the SPACE GAME! server in order to play. Even if you are playing alone, you need to load that up first. Also note that right now this requires you to have the server running on the same machine you're playing with... so yeah. You'll be playing alone anyway.
+
 ## Current Features
 
 - You can zip around in your blocky spaceship via frictionless Newtonian physics.
@@ -11,6 +15,7 @@ Note that this will not work on a computer that does not have hardware graphics 
 - You can hide in nebulae (purple boxes).
 - You can park safely inside safe zones (green boxes).
 - You can shoot straight ahead (though the bullets don't actually do anything yet).
+- You can see other people zooming around where you are.
 
 ## Controls
 
@@ -42,6 +47,5 @@ This uses the [Babylon.js](http://www.babylonjs.com/) game engine thing, which i
 - Proper textures / models.
 - Mine-able/pick-up-able objects and trading.
 - Different ships, weapons, engines, etc.
-- Multiplayer via socket.io.
 - Travel to other areas after purchasing a hyperdrive.
-- Game server that runs the civs, economy, trading, the galaxy, subspace travel.
+- Game server that runs the civs, economy, combat, trading, the galaxy, subspace travel.
