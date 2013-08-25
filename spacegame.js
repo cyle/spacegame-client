@@ -132,13 +132,9 @@ BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", sce
 	}
 });
 
-BABYLON.SceneLoader.ImportMesh("", "models/", "spaceship-beginner.babylon", scene, function (newMeshes, particleSystems) {
-	console.log(newMeshes);
-	for (i = 0; i < newMeshes.length; i++) {
-		//newMeshes[i].scaling = new BABYLON.Vector3(1, 1, 1);
-		//newMeshes[i].position = new BABYLON.Vector3(0, 0, 0);
-		//newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
-	}
+var testModel = new TestObject(0, 0, scene);
+BABYLON.SceneLoader.ImportMesh("", "models/", "dummy.babylon", scene, function(newMeshes, particleSystems) {
+	testModel.objects = newMeshes;
 });
 
 // add an asteroid field
@@ -310,6 +306,9 @@ var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
+	
+	// update the test model
+	testModel.update();
 	
 	// move the little box back and forth through the big box
 	if (boxdir == true && box2.position.y > -10) {
