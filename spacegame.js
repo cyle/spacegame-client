@@ -132,6 +132,15 @@ BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", sce
 	}
 });
 
+BABYLON.SceneLoader.ImportMesh("", "models/", "spaceship-beginner.babylon", scene, function (newMeshes, particleSystems) {
+	console.log(newMeshes);
+	for (i = 0; i < newMeshes.length; i++) {
+		//newMeshes[i].scaling = new BABYLON.Vector3(1, 1, 1);
+		//newMeshes[i].position = new BABYLON.Vector3(0, 0, 0);
+		//newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
+	}
+});
+
 // add an asteroid field
 var asteroidFieldX = 50; // the center X pos of the field
 var asteroidFieldY = 50; // the center Y pos of the field
