@@ -95,6 +95,9 @@ Bullet.prototype.checkCollisions = function(scene) {
 		//console.log('checking if bullet hit ' + scene.meshes[i].name);
 		if (scene.meshes[j].name != 'BULLET' && scene.meshes[j].hasOwnProperty('solid') && scene.meshes[j].solid == true && scene.meshes[j].intersectsMesh(this.bulletSphere, true)) {
 			console.log('bullet hit ' + scene.meshes[j].name);
+			if (scene.meshes[j].name.indexOf('asteroid') !== -1) {
+				scene.meshes[j].dispose();
+			}
 			this.done = true;
 			break;
 		}

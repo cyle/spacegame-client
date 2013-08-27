@@ -118,7 +118,7 @@ nebulabox.material.wireframe = true;
 // just create random crap in the background
 // so it's easier to tell when we're moving
 for (i = 0; i < 200; i++) {
-	var newcrap = BABYLON.Mesh.CreateSphere("crap "+i, 3, 0.5, scene);
+	var newcrap = BABYLON.Mesh.CreateSphere("crap-"+i, 3, 0.5, scene);
 	newcrap.material = new BABYLON.StandardMaterial("crap-material", scene);
 	newcrap.material.emissiveColor = new BABYLON.Color4(0.2, 0.2, 0.2, 1);
 	newcrap.position.x = randomFromInterval(-100, 100);
@@ -129,7 +129,7 @@ for (i = 0; i < 200; i++) {
 // add some random asteroids
 /*
 for (i = 0; i < 100; i++) {
-	var asteroid = BABYLON.Mesh.CreateSphere("asteroid "+i, 3, 1, scene);
+	var asteroid = BABYLON.Mesh.CreateSphere("asteroid-"+i, 3, 1, scene);
 	asteroid.material = new BABYLON.StandardMaterial("asteroid-material", scene);
 	asteroid.material.emissiveColor = new BABYLON.Color4(0.6, 0.3, 0, 1);
 	asteroid.position.x = randomFromInterval(-100, 100);
@@ -160,7 +160,7 @@ BABYLON.SceneLoader.ImportMesh("", "models/", "dummy.babylon", scene, function(n
 var asteroidFieldX = 50; // the center X pos of the field
 var asteroidFieldY = 50; // the center Y pos of the field
 for (i = 0; i < 100; i++) {
-	var asteroidField = BABYLON.Mesh.CreateSphere("asteroidField "+i, 3, 1, scene);
+	var asteroidField = BABYLON.Mesh.CreateSphere("asteroid-field-"+i, 3, 1, scene);
 	asteroidField.material = new BABYLON.StandardMaterial("asteroid-material", scene);
 	asteroidField.material.emissiveColor = new BABYLON.Color4(0.6, 0.3, 0, 1);
 	asteroidField.position.x = asteroidFieldX + randomFromInterval(-20, 20);
