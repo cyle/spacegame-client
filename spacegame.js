@@ -387,6 +387,7 @@ scene.registerBeforeRender(function () {
 	// go through the bullets, update their positions
 	for (i = 0; i < bullets.length; i++) { 
 		bullets[i].update(); // update!
+		bullets[i].checkCollisions(scene); // check to see if the bullet hit anything
 		if (bullets[i].done == true) {
 			bullets[i].update(); // run its own cleanup
 			bullets.splice(i, 1); // remove from the array of bullets

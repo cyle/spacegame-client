@@ -90,6 +90,17 @@ Bullet.prototype.update = function() {
 	}
 }
 
+Bullet.prototype.checkCollisions = function(scene) {	
+	for (j = 0; j < scene.meshes.length; j++) {
+		//console.log('checking if bullet hit ' + scene.meshes[i].name);
+		if (scene.meshes[j].name != 'BULLET' && scene.meshes[j].hasOwnProperty('solid') && scene.meshes[j].solid == true && scene.meshes[j].intersectsMesh(this.bulletSphere, true)) {
+			console.log('bullet hit ' + scene.meshes[j].name);
+			this.done = true;
+			break;
+		}
+	}
+}
+
 
 /*
 
