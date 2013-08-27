@@ -309,7 +309,7 @@ PlayerShip.prototype.checkCollisions = function(scene) {
 	// set normal colors...
 	for (i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
-		this.objects[i].material.emissiveColor = new BABYLON.Color4(0, 0, 0, 1);
+		this.objects[i].material.emissiveColor = new BABYLON.Color4(0.5, 0.5, 0.5, 1);
 		this.objects[i].material.alpha = 1.0;
 	}
 	

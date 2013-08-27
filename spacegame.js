@@ -18,7 +18,10 @@ camera.upperBetaLimit = Math.PI * 0.66;
 scene.activeCamera.attachControl(canvas);
 
 // create a fill light so we can see things
-var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(25, -25, 25), scene);
+var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(45, -25, 30), scene);
+light.diffuse = new BABYLON.Color3(1, 1, 0);
+light.specular = new BABYLON.Color3(1, 1, 1);
+light.intensity = 0.575
 
 
 
