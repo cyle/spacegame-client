@@ -116,24 +116,32 @@ function OtherShip(name, x, y, angle, scene) {
 	this.y = y;
 	this.z = 0.0; // z will probably stay zero foreverrrr
 	this.currentRotation = angle;
+	this.hpCurrent = 50;
+	this.hpMax = 50;
 	
 	this.objects = []; // will hold all of the meshes that make up this object
 	
 	// the origin's position is relative to the object's x and y origin
-	var shipOriginBox = BABYLON.Mesh.CreateBox("spaceship-origin", 2.0, scene);
+	var shipOriginBox = BABYLON.Mesh.CreateBox("player-"+this.name+"-spaceship-origin", 2.0, scene);
 	shipOriginBox.position = new BABYLON.Vector3(this.x + 0, this.y + 0, 0);
 	shipOriginBox.material = new BABYLON.StandardMaterial("spaceship-material", scene);
+	shipOriginBox.collideWith = true;
+	shipOriginBox.solid = true;
 	
 	// now all subsequent meshes will be relative to that origin
-	var box2 = BABYLON.Mesh.CreateBox("spaceship-piece2", 1.0, scene);
+	var box2 = BABYLON.Mesh.CreateBox("player-"+this.name+"-spaceship-piece2", 1.0, scene);
 	box2.parent = shipOriginBox;
 	box2.position = new BABYLON.Vector3(1, -1, 0);
 	box2.material = new BABYLON.StandardMaterial("spaceship-material", scene);
+	box2.collideWith = true;
+	box2.solid = true;
 	
-	var box3 = BABYLON.Mesh.CreateBox("spaceship-piece3", 1.0, scene);
+	var box3 = BABYLON.Mesh.CreateBox("player-"+this.name+"-spaceship-piece3", 1.0, scene);
 	box3.parent = shipOriginBox;
 	box3.position = new BABYLON.Vector3(-1, -1, 0);
 	box3.material = new BABYLON.StandardMaterial("spaceship-material", scene);
+	box3.collideWith = true;
+	box3.solid = true;
 	
 	// add those meshes to this ship's list of objects
 	this.objects.push(shipOriginBox);
@@ -181,6 +189,10 @@ function PlayerShip(x, y, scene) {
 	this.x = x;
 	this.y = y;
 	this.z = 0.0; // z will probably stay zero foreverrrr
+	
+	// player health info
+	this.hpCurrent = 50;
+	this.hpMax = 50;
 	
 	// player box info
 	this.currentThrustingDirection = 0; // 0 = not moving, -1 = backwards, 1 = forwards
