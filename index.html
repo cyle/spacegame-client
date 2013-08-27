@@ -6,6 +6,7 @@
 </head>
 <body>
 <div id="debug"></div>
+<div id="hud"></div>
 <div id="root"><canvas id="render"></canvas></div>
 <audio id="thruster-sound" src="audio/thruster.wav" loop="loop" preload="auto"></audio>
 <audio id="blaster-sound" src="audio/blaster.wav" preload="auto"></audio>
@@ -58,9 +59,13 @@
 <!-- socket.io -->
 <script src="http://localhost:31777/socket.io/socket.io.js"></script>
 <!-- the space game itself -->
+<script>
+var gameIsReady = false;
+</script>
 <script src="spacegame.helpers.js"></script>
 <script src="spacegame.classes.js"></script>
-<script src="spacegame.js"></script>
+<script src="spacegame.hud.js"></script>
 <script src="spacegame.debug.js"></script>
+<script src="spacegame.js"></script>
 </body>
 </html>

@@ -1,14 +1,14 @@
 // the canvas element is where the magic happens
 var canvas = document.getElementById("render");
-var engine = new BABYLON.Engine(canvas, false); // load the BABYLON engine
+var engine = new BABYLON.Engine(canvas, true); // load the BABYLON engine
 var scene = new BABYLON.Scene(engine); // load the BABYLON scene, where all meshes will live
 
 // the player camera will be constrained, allowing a top-down view of the player's ship
 // arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
-var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 25, new BABYLON.Vector3(0, 0, 0), scene);
+var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 50, new BABYLON.Vector3(0, 0, 0), scene);
 // constrain the camera
 camera.lowerRadiusLimit = 10;
-camera.upperRadiusLimit = 50;
+camera.upperRadiusLimit = 75;
 camera.lowerAlphaLimit = Math.PI * 0.33;
 camera.upperAlphaLimit = Math.PI * 0.66;
 camera.lowerBetaLimit = Math.PI * 0.33;
@@ -18,7 +18,7 @@ camera.upperBetaLimit = Math.PI * 0.66;
 scene.activeCamera.attachControl(canvas);
 
 // create a fill light so we can see things
-var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(25, 25, 25), scene);
+var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(25, -25, 25), scene);
 
 
 
@@ -419,3 +419,5 @@ engine.runRenderLoop(function() {
 window.addEventListener("resize", function() {
 	engine.resize(); // resize the engine accordingly
 });
+
+gameIsReady = true;
