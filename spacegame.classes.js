@@ -113,8 +113,21 @@ function OtherShip(name, x, y, angle, scene) {
 	shipOriginBox.position = new BABYLON.Vector3(this.x + 0, this.y + 0, 0);
 	shipOriginBox.material = new BABYLON.StandardMaterial("spaceship-material", scene);
 	
+	// now all subsequent meshes will be relative to that origin
+	var box2 = BABYLON.Mesh.CreateBox("spaceship-piece2", 1.0, scene);
+	box2.parent = shipOriginBox;
+	box2.position = new BABYLON.Vector3(1, -1, 0);
+	box2.material = new BABYLON.StandardMaterial("spaceship-material", scene);
+	
+	var box3 = BABYLON.Mesh.CreateBox("spaceship-piece3", 1.0, scene);
+	box3.parent = shipOriginBox;
+	box3.position = new BABYLON.Vector3(-1, -1, 0);
+	box3.material = new BABYLON.StandardMaterial("spaceship-material", scene);
+	
 	// add those meshes to this ship's list of objects
 	this.objects.push(shipOriginBox);
+	this.objects.push(box2);
+	this.objects.push(box3);
 	
 }
 
