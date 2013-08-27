@@ -43,6 +43,20 @@ box2.parent = box;
 box2.position.y = 10;
 box2.material = new BABYLON.StandardMaterial("box2-material", scene);
 
+// set up an X/Y/Z axis for reference...
+var xBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
+xBox.position = new BABYLON.Vector3(1, 0, 0);
+xBox.material = new BABYLON.StandardMaterial("xBox-material", scene);
+xBox.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
+var yBox = BABYLON.Mesh.CreateBox("yBox", 1.0, scene);
+yBox.position = new BABYLON.Vector3(0, 1, 0);
+yBox.material = new BABYLON.StandardMaterial("yBox-material", scene);
+yBox.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
+var zBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
+zBox.position = new BABYLON.Vector3(0, 0, 1);
+zBox.material = new BABYLON.StandardMaterial("zBox-material", scene);
+zBox.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
+
 // this flat plane acts as the "background" right now
 // flat plane: name, size of plane, scene to add it to
 var plane = BABYLON.Mesh.CreatePlane("Plane", 200.0, scene);
@@ -50,7 +64,7 @@ plane.position = new BABYLON.Vector3(0, 0, -8);
 plane.rotation.y = -Math.PI;
 
 var ruler = BABYLON.Mesh.CreatePlane("ruler", 1, scene);
-ruler.position = new BABYLON.Vector3(3, 3, 0);
+ruler.position = new BABYLON.Vector3(2, 2, 0);
 ruler.rotation.y = -Math.PI;
 ruler.material = new BABYLON.StandardMaterial("ruler-material", scene);
 ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
@@ -132,10 +146,12 @@ BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", sce
 	}
 });
 
-var testModel = new TestObject(0, 0, scene);
+/*
+var testModel = new TestObject(5, 5, scene);
 BABYLON.SceneLoader.ImportMesh("", "models/", "dummy.babylon", scene, function(newMeshes, particleSystems) {
 	testModel.objects = newMeshes;
 });
+*/
 
 // add an asteroid field
 var asteroidFieldX = 50; // the center X pos of the field
@@ -308,7 +324,7 @@ var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 scene.registerBeforeRender(function () {
 	
 	// update the test model
-	testModel.update();
+	//testModel.update();
 	
 	// move the little box back and forth through the big box
 	if (boxdir == true && box2.position.y > -10) {
