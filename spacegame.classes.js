@@ -167,10 +167,10 @@ function PlayerShip(x, y, scene) {
 	this.oppositeMovingAngle = 0.0;
 	this.maxSpeed = 0.2;
 	this.minSpeed = -0.1;
-	this.accelerationRate = 0.01;
-	this.decelerationRate = 0.01;
-	this.rotationRate = 0.1;
-	this.rotationThrustRate = 0.1;
+	this.accelerationRate = 0.005;
+	this.decelerationRate = 0.0075;
+	this.rotationRate = 0.05;
+	this.rotationThrustRate = 0.05;
 	this.instantTurnSpeed = 0.03; // speed at which the ship just turns instantly
 	this.acuteTurnThreshold = degreesToRadians(90); // +/- this number will be an easy "acute" turn
 	this.wideTurnThreshold = degreesToRadians(140); // between acute and this number will be a hard "wide" turn
