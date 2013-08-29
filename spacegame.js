@@ -21,7 +21,7 @@ scene.activeCamera.attachControl(canvas);
 var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(45, -25, 30), scene);
 light.diffuse = new BABYLON.Color3(1, 1, 0);
 light.specular = new BABYLON.Color3(1, 1, 1);
-light.intensity = 0.575
+light.intensity = 0.575;
 
 
 
@@ -148,13 +148,6 @@ BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", sce
 		newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
 	}
 });
-
-/*
-var testModel = new TestObject(5, 5, scene);
-BABYLON.SceneLoader.ImportMesh("", "models/", "dummy.babylon", scene, function(newMeshes, particleSystems) {
-	testModel.objects = newMeshes;
-});
-*/
 
 // add an asteroid field
 var asteroidFieldX = 50; // the center X pos of the field
@@ -325,9 +318,6 @@ var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
-	
-	// update the test model
-	//testModel.update();
 	
 	// move the little box back and forth through the big box
 	if (boxdir == true && box2.position.y > -10) {
