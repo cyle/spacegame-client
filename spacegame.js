@@ -48,15 +48,15 @@ box2.material = new BABYLON.StandardMaterial("box2-material", scene);
 
 // set up an X/Y/Z axis for reference...
 var xBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
-xBox.position = new BABYLON.Vector3(1, 0, 0);
+xBox.position = new BABYLON.Vector3(6, 5, 2);
 xBox.material = new BABYLON.StandardMaterial("xBox-material", scene);
 xBox.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 var yBox = BABYLON.Mesh.CreateBox("yBox", 1.0, scene);
-yBox.position = new BABYLON.Vector3(0, 1, 0);
+yBox.position = new BABYLON.Vector3(5, 6, 2);
 yBox.material = new BABYLON.StandardMaterial("yBox-material", scene);
 yBox.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
 var zBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
-zBox.position = new BABYLON.Vector3(0, 0, 1);
+zBox.position = new BABYLON.Vector3(5, 5, 3);
 zBox.material = new BABYLON.StandardMaterial("zBox-material", scene);
 zBox.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
 
