@@ -171,6 +171,8 @@ function PlayerShip(x, y, scene) {
 	this.wideTurnThreshold = degreesToRadians(140); // between acute and this number will be a hard "wide" turn
 	
 	this.objects = []; // will hold all of the meshes that make up this object
+	this.forwardThrusters = [];
+	this.reverseThrusters = [];
 		
 	// the origin's position is relative to the object's x and y origin
 	var shipOriginBox = BABYLON.Mesh.CreateBox("spaceship-origin", 2.0, scene);
@@ -188,6 +190,7 @@ function PlayerShip(x, y, scene) {
 	box3.position = new BABYLON.Vector3(-1, -1, 0);
 	box3.material = new BABYLON.StandardMaterial("spaceship-material", scene);
 	
+	/*
 	var thrustBoxOne = BABYLON.Mesh.CreateBox("spaceship-thrust1", 0.75, scene);
 	thrustBoxOne.ignoreColoring = true;
 	thrustBoxOne.isThruster = true;
@@ -207,13 +210,60 @@ function PlayerShip(x, y, scene) {
 	thrustBoxTwo.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 	thrustBoxTwo.material.alpha = 0.5;
 	thrustBoxTwo.isVisible = false;
+	*/
 		
 	// add those meshes to this ship's list of objects
 	this.objects.push(shipOriginBox);
 	this.objects.push(box2);
 	this.objects.push(box3);
-	this.objects.push(thrustBoxOne);
-	this.objects.push(thrustBoxTwo);
+	//this.objects.push(thrustBoxOne);
+	//this.objects.push(thrustBoxTwo);
+	
+	var thrusterMaterial = new BABYLON.Texture("assets/flare.png", scene);
+	
+	var particleSystemOne = new BABYLON.ParticleSystem("thrust-particles-1", 2000, scene);
+	particleSystemOne.emitter = box2; // Where the particles comes from
+	var particleSystemTwo = new BABYLON.ParticleSystem("thrust-particles-2", 2000, scene);
+	particleSystemTwo.emitter = box3; // Where the particles comes from
+	this.forwardThrusters.push(particleSystemOne);
+	this.forwardThrusters.push(particleSystemTwo);
+	for (p = 0; p < this.forwardThrusters.length; p++) {
+		this.forwardThrusters[p].particleTexture = thrusterMaterial;
+		this.forwardThrusters[p].textureMask = new BABYLON.Color4(0.1, 0.8, 0.8, 1.0);
+		this.forwardThrusters[p].color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 1.0);
+		this.forwardThrusters[p].color2 = new BABYLON.Color4(0.2, 0.5, 1.0, 1.0);
+		this.forwardThrusters[p].colorDead = new BABYLON.Color4(0, 0, 0.2, 0.0);
+		this.forwardThrusters[p].minSize = 0.1;
+		this.forwardThrusters[p].maxSize = 0.4;
+		this.forwardThrusters[p].minLifeTime = 0.2;
+		this.forwardThrusters[p].maxLifeTime = 0.5;
+		this.forwardThrusters[p].emitRate = 500; // how many at a time
+		this.forwardThrusters[p].blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE; // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+		this.forwardThrusters[p].direction1 = new BABYLON.Vector3(-2, -8, 1); // potential direction of each particle after it has been emitted
+		this.forwardThrusters[p].direction2 = new BABYLON.Vector3(2, -8, -1); // potential direction of each particle after it has been emitted
+	}
+	
+	var particleSystemThree = new BABYLON.ParticleSystem("thrust-particles-3", 2000, scene);
+	particleSystemThree.emitter = box2; // Where the particles comes from
+	var particleSystemFour = new BABYLON.ParticleSystem("thrust-particles-4", 2000, scene);
+	particleSystemFour.emitter = box3; // Where the particles comes from
+	this.reverseThrusters.push(particleSystemThree);
+	this.reverseThrusters.push(particleSystemFour);
+	for (p = 0; p < this.reverseThrusters.length; p++) {
+		this.reverseThrusters[p].particleTexture = thrusterMaterial;
+		this.reverseThrusters[p].textureMask = new BABYLON.Color4(0.1, 0.8, 0.8, 1.0);
+		this.reverseThrusters[p].color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 1.0);
+		this.reverseThrusters[p].color2 = new BABYLON.Color4(0.2, 0.5, 1.0, 1.0);
+		this.reverseThrusters[p].colorDead = new BABYLON.Color4(0, 0, 0.2, 0.0);
+		this.reverseThrusters[p].minSize = 0.1;
+		this.reverseThrusters[p].maxSize = 0.4;
+		this.reverseThrusters[p].minLifeTime = 0.2;
+		this.reverseThrusters[p].maxLifeTime = 0.5;
+		this.reverseThrusters[p].emitRate = 500; // how many at a time
+		this.reverseThrusters[p].blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE; // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+		this.reverseThrusters[p].direction1 = new BABYLON.Vector3(-2, 8, 1); // potential direction of each particle after it has been emitted
+		this.reverseThrusters[p].direction2 = new BABYLON.Vector3(2, 8, -1); // potential direction of each particle after it has been emitted
+	}
 	
 }
 
@@ -253,22 +303,38 @@ PlayerShip.prototype.setDirection = function(direction) {
 	if (direction < 0) {
 		this.currentlyThrusting = true;
 		this.currentThrustingDirection = -1; // thrusting in reverse
+		for (i = 0; i < this.reverseThrusters.length; i++) {
+			this.reverseThrusters[i].start();
+		}
 	} else if (direction > 0) {
 		this.currentlyThrusting = true;
 		this.currentThrustingDirection = 1; // thrusting forward
+		/*
 		for (i = 0; i < this.objects.length; i++) {
 			if (this.objects[i].hasOwnProperty('isThruster') && this.objects[i].isThruster == true) {
 				this.objects[i].isVisible = true;
 				this.objects[i].material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 			}
 		}
+		*/
+		for (i = 0; i < this.forwardThrusters.length; i++) {
+			this.forwardThrusters[i].start();
+		}
 	} else {
 		this.currentlyThrusting = false; // not thrusting at all
 		this.currentThrustingDirection = 0;
+		/*
 		for (i = 0; i < this.objects.length; i++) {
 			if (this.objects[i].hasOwnProperty('isThruster') && this.objects[i].isThruster == true) {
 				this.objects[i].isVisible = false;
 			}
+		}
+		*/
+		for (i = 0; i < this.forwardThrusters.length; i++) {
+			this.forwardThrusters[i].stop();
+		}
+		for (i = 0; i < this.reverseThrusters.length; i++) {
+			this.reverseThrusters[i].stop();
 		}
 	}
 }
