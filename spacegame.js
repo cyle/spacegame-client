@@ -1,3 +1,6 @@
+// get where the socket.io server is
+var socket_server_hostname = prompt('What\'s the hostname or IP of the server?', 'localhost');
+
 // the canvas element is where the magic happens
 var canvas = document.getElementById("render");
 var engine = new BABYLON.Engine(canvas, true); // load the BABYLON engine
@@ -182,7 +185,7 @@ var playerName = '';
 var players = [];
 
 // open up a socket to the server
-var socket = io.connect('http://localhost:31777');
+var socket = io.connect('http://'+socket_server_hostname+':31777');
 
 socket.on('welcome', function(name) {
 	playerName = name;
