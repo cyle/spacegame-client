@@ -303,44 +303,44 @@ PlayerShip.prototype.setDirection = function(direction) {
 	if (direction < 0) {
 		this.currentlyThrusting = true;
 		this.currentThrustingDirection = -1; // thrusting in reverse
-		for (i = 0; i < this.reverseThrusters.length; i++) {
+		for (var i = 0; i < this.reverseThrusters.length; i++) {
 			this.reverseThrusters[i].start();
 		}
 	} else if (direction > 0) {
 		this.currentlyThrusting = true;
 		this.currentThrustingDirection = 1; // thrusting forward
 		/*
-		for (i = 0; i < this.objects.length; i++) {
+		for (var i = 0; i < this.objects.length; i++) {
 			if (this.objects[i].hasOwnProperty('isThruster') && this.objects[i].isThruster == true) {
 				this.objects[i].isVisible = true;
 				this.objects[i].material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 			}
 		}
 		*/
-		for (i = 0; i < this.forwardThrusters.length; i++) {
+		for (var i = 0; i < this.forwardThrusters.length; i++) {
 			this.forwardThrusters[i].start();
 		}
 	} else {
 		this.currentlyThrusting = false; // not thrusting at all
 		this.currentThrustingDirection = 0;
 		/*
-		for (i = 0; i < this.objects.length; i++) {
+		for (var i = 0; i < this.objects.length; i++) {
 			if (this.objects[i].hasOwnProperty('isThruster') && this.objects[i].isThruster == true) {
 				this.objects[i].isVisible = false;
 			}
 		}
 		*/
-		for (i = 0; i < this.forwardThrusters.length; i++) {
+		for (var i = 0; i < this.forwardThrusters.length; i++) {
 			this.forwardThrusters[i].stop();
 		}
-		for (i = 0; i < this.reverseThrusters.length; i++) {
+		for (var i = 0; i < this.reverseThrusters.length; i++) {
 			this.reverseThrusters[i].stop();
 		}
 	}
 }
 
 PlayerShip.prototype.collided = function() {
-	for (i = 0; i < this.objects.length; i++) {
+	for (var i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 	}
@@ -352,14 +352,14 @@ PlayerShip.prototype.collided = function() {
 }
 
 PlayerShip.prototype.safeZoned = function() {
-	for (i = 0; i < this.objects.length; i++) {
+	for (var i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
 	}
 }
 
 PlayerShip.prototype.invisible = function() {
-	for (i = 0; i < this.objects.length; i++) {
+	for (var i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.alpha = 0.15;
 	}
@@ -368,7 +368,7 @@ PlayerShip.prototype.invisible = function() {
 PlayerShip.prototype.checkCollisions = function(scene) {
 
 	// set normal colors...
-	for (i = 0; i < this.objects.length; i++) {
+	for (var i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.emissiveColor = new BABYLON.Color4(0.5, 0.5, 0.5, 1);
 		this.objects[i].material.alpha = 1.0;
@@ -379,7 +379,7 @@ PlayerShip.prototype.checkCollisions = function(scene) {
 		// has there been a collision...?
 		var collided = false;
 		
-		for (i = 0; i < scene.meshes.length; i++) {
+		for (var i = 0; i < scene.meshes.length; i++) {
 			if (scene.meshes[i].hasOwnProperty('collideWith') && scene.meshes[i].collideWith == true) {
 				// if i can collide with it, check against all of the ship's meshes
 				for (j = 0; j < this.objects.length; j++) {
