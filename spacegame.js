@@ -1,5 +1,9 @@
 // get where the socket.io server is
 var socket_server_hostname = prompt('What\'s the hostname or IP of the server?', 'localhost');
+while (socket_server_hostname == undefined || socket_server_hostname == '') {
+	alert('You really need to connect to a server.');
+	socket_server_hostname = prompt('What\'s the hostname or IP of the server?', 'localhost');
+}
 // ask for the player's name
 var playerName = prompt('Your name?');
 while (playerName == undefined || playerName == '') {
