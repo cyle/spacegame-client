@@ -397,7 +397,25 @@ scene.registerBeforeRender(function () {
 	}
 	
 	playerShip.update(); // ok, update the player's ship position
-		
+	
+	// keep the player ship within the area's X bounds
+	if (playerShip.x > 100) {
+		playerShip.x = 100;
+		playerShip.update(); // ok, update the player's ship position
+	} else if (playerShip.x < -100) {
+		playerShip.x = -100;
+		playerShip.update(); // ok, update the player's ship position
+	}
+	
+	// keep the player within the area's Y bounds
+	if (playerShip.y > 100) {
+		playerShip.y = 100;
+		playerShip.update(); // ok, update the player's ship position
+	} else if (playerShip.y < -100) {
+		playerShip.y = -100;
+		playerShip.update(); // ok, update the player's ship position
+	}
+	
 	playerShip.checkCollisions(scene); // check for collisions, update the ship appropriately
 	
 	// go through the bullets, update their positions

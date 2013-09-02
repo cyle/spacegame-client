@@ -349,6 +349,9 @@ PlayerShip.prototype.collided = function() {
 	this.currentSpeed = this.currentSpeed * 0.5;
 	this.objects[0].position.x += Math.sin(this.movingRotation) * -0.5;
 	this.objects[0].position.y += Math.cos(this.movingRotation) * 0.5;
+	// update our actual position
+	this.x = this.objects[0].position.x;
+	this.y = this.objects[0].position.y;
 }
 
 PlayerShip.prototype.safeZoned = function() {
@@ -409,9 +412,12 @@ PlayerShip.prototype.checkCollisions = function(scene) {
 PlayerShip.prototype.update = function() {
 	// move the position of all objects the same way
 	
+	// if something moved our player position, make it so
+	this.objects[0].position.x = this.x;
+	this.objects[0].position.y = this.y;
+	
 	// rotate just the origin element
 	this.objects[0].rotation.z = this.currentRotation;
-	
 	
 	// ok, go through everything
 	// get the opposite angle to how we are currently moving
