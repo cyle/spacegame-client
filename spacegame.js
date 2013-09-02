@@ -32,8 +32,10 @@ scene.activeCamera.attachControl(canvas);
 
 // create a fill light so we can see things
 var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(45, -25, 30), scene);
-light.diffuse = new BABYLON.Color3(1, 1, 0);
-light.specular = new BABYLON.Color3(1, 1, 1);
+//light.diffuse = new BABYLON.Color3(1, 1, 0);
+light.diffuse = new BABYLON.Color3(1, 1, 1);
+//light.specular = new BABYLON.Color3(1, 1, 1);
+light.specular = new BABYLON.Color3(0, 0, 0);
 light.intensity = 0.575;
 
 
@@ -78,6 +80,10 @@ zBox.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
 var plane = BABYLON.Mesh.CreatePlane("Plane", 200.0, scene);
 plane.position = new BABYLON.Vector3(0, 0, -8);
 plane.rotation.y = -Math.PI;
+plane.material = new BABYLON.StandardMaterial("bg-material", scene);
+plane.material.diffuseTexture = new BABYLON.Texture("assets/bg/stars.jpg", scene);
+plane.material.diffuseTexture.uScale = 6.0;
+plane.material.diffuseTexture.vScale = 6.0;
 
 var ruler = BABYLON.Mesh.CreatePlane("ruler", 1, scene);
 ruler.position = new BABYLON.Vector3(2, 2, 0);
@@ -133,7 +139,8 @@ nebulabox.material.wireframe = true;
 for (i = 0; i < 200; i++) {
 	var newcrap = BABYLON.Mesh.CreateSphere("crap-"+i, 3, 0.5, scene);
 	newcrap.material = new BABYLON.StandardMaterial("crap-material", scene);
-	newcrap.material.emissiveColor = new BABYLON.Color4(0.2, 0.2, 0.2, 1);
+	//newcrap.material.emissiveColor = new BABYLON.Color4(0.2, 0.2, 0.2, 1);
+	newcrap.material.emissiveColor = new BABYLON.Color4(1, 1, 1, 1);
 	newcrap.position.x = randomFromInterval(-100, 100);
 	newcrap.position.y = randomFromInterval(-100, 100);
 	newcrap.position.z = -4;
