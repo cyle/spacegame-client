@@ -30,6 +30,9 @@ camera.upperBetaLimit = Math.PI * 0.66;
 // attach the camera to the scene
 scene.activeCamera.attachControl(canvas);
 
+// this will eventually hold the "area" the player is inhabiting...
+var area = {};
+
 // create a fill light so we can see things
 var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(45, -25, 30), scene);
 //light.diffuse = new BABYLON.Color3(1, 1, 0);
@@ -37,29 +40,6 @@ light.diffuse = new BABYLON.Color3(1, 1, 1);
 //light.specular = new BABYLON.Color3(1, 1, 1);
 light.specular = new BABYLON.Color3(0, 0, 0);
 light.intensity = 0.575;
-
-
-
-/*
-
-	here's a bunch of primitives to add to the scene
-	  just to test out what they look like and how they work
-
-*/
-
-
-// these boxes are just weird examples of animation later on
-// box: name, size of box, scene to add it to
-var box = BABYLON.Mesh.CreateBox("Box", 4.0, scene);
-box.position = new BABYLON.Vector3(-25,0,0);
-box.rotation.x = Math.PI/3;
-box.rotation.y = -Math.PI/3;
-box.rotation.z = Math.PI/5;
-// create a littler box, which will interact with the big box
-var box2 = BABYLON.Mesh.CreateBox("Box2", 3.0, scene);
-box2.parent = box;
-box2.position.y = 10;
-box2.material = new BABYLON.StandardMaterial("box2-material", scene);
 
 // set up an X/Y/Z axis for reference...
 var xBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
@@ -75,16 +55,6 @@ zBox.position = new BABYLON.Vector3(5, 5, 3);
 zBox.material = new BABYLON.StandardMaterial("zBox-material", scene);
 zBox.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
 
-// this flat plane acts as the "background" right now
-// flat plane: name, size of plane, scene to add it to
-var plane = BABYLON.Mesh.CreatePlane("Plane", 200.0, scene);
-plane.position = new BABYLON.Vector3(0, 0, -8);
-plane.rotation.y = -Math.PI;
-plane.material = new BABYLON.StandardMaterial("bg-material", scene);
-plane.material.diffuseTexture = new BABYLON.Texture("assets/bg/stars.jpg", scene);
-plane.material.diffuseTexture.uScale = 6.0;
-plane.material.diffuseTexture.vScale = 6.0;
-
 var ruler = BABYLON.Mesh.CreatePlane("ruler", 1, scene);
 ruler.position = new BABYLON.Vector3(2, 2, 0);
 ruler.rotation.y = -Math.PI;
@@ -92,95 +62,29 @@ ruler.material = new BABYLON.StandardMaterial("ruler-material", scene);
 ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
 
 // sphere: name, segments (detail), size, scene to add it to
-var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
-sphere.position = new BABYLON.Vector3(15,0,0);
-sphere.collideWith = true;
-sphere.material = new BABYLON.StandardMaterial("texture", scene);
-sphere.material.wireframe = true;
+// var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
+// sphere.position = new BABYLON.Vector3(15,0,0);
+// sphere.collideWith = true;
+// sphere.material = new BABYLON.StandardMaterial("texture", scene);
+// sphere.material.wireframe = true;
 
 // cylinder: name, height, diameter, segments (detail), scene to add it to, whether it's updatable
-var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
-cylinder.position = new BABYLON.Vector3(15,5,0);
+// var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
+// cylinder.position = new BABYLON.Vector3(15,5,0);
 
 // torus: name, diameter, thickness, segments (detail), scene to add it to, whether it's updatable
-var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 20, scene, false);
-torus.position = new BABYLON.Vector3(15,10,0);
-
-
-
-/*
-
-	okay, these are some actual game element objects
-
-*/
-
-// make a "safe box", used later
-// the idea is that inside a safe zone, a ship is invulnerable but weaponless
-var safebox = BABYLON.Mesh.CreateRect("Safe Zone", 10, 20, 3, scene);
-safebox.position = new BABYLON.Vector3(-15,15,0);
-safebox.collideWith = true;
-safebox.safeZone = true;
-safebox.material = new BABYLON.StandardMaterial("texture", scene);
-safebox.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
-safebox.material.wireframe = true;
-
-// make a "nebula box", used later
-// the idea is that inside a nebula, a ship is invisible
-var nebulabox = BABYLON.Mesh.CreateRect("Nebula", 10, 20, 3, scene);
-nebulabox.position = new BABYLON.Vector3(-15,-15,0);
-nebulabox.collideWith = true;
-nebulabox.nebula = true;
-nebulabox.material = new BABYLON.StandardMaterial("texture", scene);
-nebulabox.material.emissiveColor = new BABYLON.Color4(0.5, 0.0, 0.5, 1);
-nebulabox.material.wireframe = true;
-
-// just create random crap in the background
-// so it's easier to tell when we're moving
-for (i = 0; i < 200; i++) {
-	var newcrap = BABYLON.Mesh.CreateSphere("crap-"+i, 3, 0.5, scene);
-	newcrap.material = new BABYLON.StandardMaterial("crap-material", scene);
-	//newcrap.material.emissiveColor = new BABYLON.Color4(0.2, 0.2, 0.2, 1);
-	newcrap.material.emissiveColor = new BABYLON.Color4(1, 1, 1, 1);
-	newcrap.position.x = randomFromInterval(-100, 100);
-	newcrap.position.y = randomFromInterval(-100, 100);
-	newcrap.position.z = -4;
-}
-
-// add some random asteroids
-/*
-for (i = 0; i < 100; i++) {
-	var asteroid = BABYLON.Mesh.CreateSphere("asteroid-"+i, 3, 1, scene);
-	asteroid.material = new BABYLON.StandardMaterial("asteroid-material", scene);
-	asteroid.material.emissiveColor = new BABYLON.Color4(0.6, 0.3, 0, 1);
-	asteroid.position.x = randomFromInterval(-100, 100);
-	asteroid.position.y = randomFromInterval(-100, 100);
-	asteroid.collideWith = true;
-	asteroid.solid = true;
-}
-*/
+// var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 20, scene, false);
+// torus.position = new BABYLON.Vector3(15,10,0);
 
 // import this spaceship mesh -- not sure what to do with it yet, but wanted to test importing
-BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", scene, function (newMeshes, particleSystems) {
-	//console.log(newMeshes);
-	for (i = 0; i < newMeshes.length; i++) {
-		newMeshes[i].scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
-		newMeshes[i].position = new BABYLON.Vector3(0, 10, 0);
-		newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
-	}
-});
-
-// add an asteroid field
-var asteroidFieldX = 50; // the center X pos of the field
-var asteroidFieldY = 50; // the center Y pos of the field
-for (i = 0; i < 100; i++) {
-	var asteroidField = BABYLON.Mesh.CreateSphere("asteroid-field-"+i, 3, 1, scene);
-	asteroidField.material = new BABYLON.StandardMaterial("asteroid-material", scene);
-	asteroidField.material.emissiveColor = new BABYLON.Color4(0.6, 0.3, 0, 1);
-	asteroidField.position.x = asteroidFieldX + randomFromInterval(-20, 20);
-	asteroidField.position.y = asteroidFieldY + randomFromInterval(-20, 20);
-	asteroidField.collideWith = true;
-	asteroidField.solid = true;
-}
+// BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", scene, function (newMeshes, particleSystems) {
+// 	//console.log(newMeshes);
+// 	for (i = 0; i < newMeshes.length; i++) {
+// 		newMeshes[i].scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
+// 		newMeshes[i].position = new BABYLON.Vector3(0, 10, 0);
+// 		newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
+// 	}
+// });
 
 /*
 
@@ -210,6 +114,78 @@ socket.on('welcome', function(playerData) {
 	playerLast.angle = playerData.angle;
 	// create the player ship
 	playerShip = new PlayerShip(playerLast.x, playerLast.y, playerLast.angle, scene);
+	//socket.emit('get-area', playerData.area);
+	socket.emit('get-current-area');
+});
+
+socket.on('area-data', function(newArea) {
+	console.log(newArea);
+});
+
+socket.on('current-area-data', function(newArea) {
+	// take incoming area data
+	
+	//console.log(newArea);
+	
+	area = newArea;
+	
+	// this flat plane acts as the "background" right now
+	// flat plane: name, size of plane, scene to add it to
+	var plane = BABYLON.Mesh.CreatePlane("background-plane", newArea.width, scene);
+	plane.position = new BABYLON.Vector3(newArea.width/2, newArea.height/2, -8);
+	plane.rotation.y = -Math.PI;
+	plane.material = new BABYLON.StandardMaterial("bg-material", scene);
+	plane.material.diffuseTexture = new BABYLON.Texture("assets/bg/stars.jpg", scene);
+	plane.material.diffuseTexture.uScale = 6.0;
+	plane.material.diffuseTexture.vScale = 6.0;
+	
+	// just create random crap in the background
+	// so it's easier to tell when we're moving
+	for (var i = 0; i < 200; i++) {
+		var newcrap = BABYLON.Mesh.CreateSphere("crap-"+i, 3, 0.5, scene);
+		newcrap.material = new BABYLON.StandardMaterial("crap-material", scene);
+		newcrap.material.emissiveColor = new BABYLON.Color4(1, 1, 1, 1);
+		newcrap.position.x = randomFromInterval(0, newArea.width);
+		newcrap.position.y = randomFromInterval(0, newArea.height);
+		newcrap.position.z = -4;
+	}
+	
+	for (var i = 0; i < newArea.stuff.length; i++) {
+		var thing = newArea.stuff[i];
+		if (thing.type == 'asteroid') {
+			var asteroid = undefined; // we will be defining it in a second...
+			if (thing.model.type == 'sphere') {
+				asteroid = BABYLON.Mesh.CreateSphere("asteroid-"+i, thing.model.seg, thing.model.size, scene);
+				asteroid.material = new BABYLON.StandardMaterial("asteroid-material", scene);
+				asteroid.material.emissiveColor = new BABYLON.Color4(thing.model.color.r, thing.model.color.g, thing.model.color.b, thing.model.color.a);
+			} else if (thing.model.type == 'file') {
+				// eventually handle it as a model file here...
+			}
+			asteroid.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			asteroid.collideWith = true;
+			asteroid.solid = true;
+		} else if (thing.type == 'nebula') {
+			var nebula = BABYLON.Mesh.CreateRect("nebula-"+i, thing.width, thing.height, thing.depth, scene);
+			nebula.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			nebula.collideWith = true;
+			nebula.nebula = true;
+			nebula.material = new BABYLON.StandardMaterial("nebula-texture", scene);
+			nebula.material.emissiveColor = new BABYLON.Color4(0.5, 0.0, 0.5, 1);
+			nebula.material.wireframe = true;
+		} else if (thing.type == 'safezone') {
+			var safezone = BABYLON.Mesh.CreateRect("safezone-"+i, thing.width, thing.height, thing.depth, scene);
+			safezone.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			safezone.collideWith = true;
+			safezone.safeZone = true;
+			safezone.material = new BABYLON.StandardMaterial("safezone-texture", scene);
+			safezone.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
+			safezone.material.wireframe = true;
+		} else {
+			console.log('unknown object in area: ');
+			console.log(thing);
+		}
+	}
+	
 	gameIsReady = true;
 });
 
@@ -356,26 +332,6 @@ scene.registerBeforeRender(function () {
 	
 	if (!gameIsReady) { return; }
 	
-	// move the little box back and forth through the big box
-	if (boxdir == true && box2.position.y > -10) {
-		box2.position.y -= 0.1;
-		if (box2.position.y <= -10) {
-			boxdir = false;
-		}
-	} else if (box2.position.y < 10 && boxdir == false) {
-		box2.position.y += 0.1;
-		if (box2.position.y >= 10) {
-			boxdir = true;
-		}
-	}
-	
-	// normal little box color:
-	box2.material.emissiveColor = new BABYLON.Color4(0, 0, 0, 1);
-	// if the box intersects with the bigger box, turn it red!
-	if (box2.intersectsMesh(box, true)) {
-		box2.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-	}
-	
 	/*
 	
 		updating the player ship
@@ -410,21 +366,21 @@ scene.registerBeforeRender(function () {
 	playerShip.update(); // ok, update the player's ship position
 	
 	// keep the player ship within the area's X bounds
-	if (playerShip.x > 100) {
-		playerShip.x = 100;
-		playerShip.update(); // ok, update the player's ship position
-	} else if (playerShip.x < -100) {
-		playerShip.x = -100;
-		playerShip.update(); // ok, update the player's ship position
+	if (playerShip.x > area.width) {
+		playerShip.x = area.width;
+		playerShip.collided(); // ok, update the player's ship position
+	} else if (playerShip.x < 0) {
+		playerShip.x = 0;
+		playerShip.collided(); // ok, update the player's ship position
 	}
 	
 	// keep the player within the area's Y bounds
-	if (playerShip.y > 100) {
-		playerShip.y = 100;
-		playerShip.update(); // ok, update the player's ship position
-	} else if (playerShip.y < -100) {
-		playerShip.y = -100;
-		playerShip.update(); // ok, update the player's ship position
+	if (playerShip.y > area.height) {
+		playerShip.y = area.height;
+		playerShip.collided(); // ok, update the player's ship position
+	} else if (playerShip.y < 0) {
+		playerShip.y = 0;
+		playerShip.collided(); // ok, update the player's ship position
 	}
 	
 	playerShip.checkCollisions(scene); // check for collisions, update the ship appropriately
