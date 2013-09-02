@@ -1,5 +1,11 @@
 // get where the socket.io server is
 var socket_server_hostname = prompt('What\'s the hostname or IP of the server?', 'localhost');
+// ask for the player's name
+var playerName = prompt('Your name?');
+while (playerName == undefined || playerName == '') {
+	alert('You really need to have a name.');
+	playerName = prompt('Your name?');
+}
 
 // the canvas element is where the magic happens
 var canvas = document.getElementById("render");
@@ -165,13 +171,6 @@ for (i = 0; i < 100; i++) {
 	asteroidField.solid = true;
 }
 
-// create the player ship
-var playerShip = new PlayerShip(0, 0, scene);
-
-// create an array to hold the bullet objects
-var bullets = [];
-
-
 /*
 
 	load multiplayer stuff
@@ -179,7 +178,9 @@ var bullets = [];
 */
 
 // this player's name
-var playerName = '';
+//var playerName = ''; // set earlier...
+var playerShip = undefined;
+var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 
 // create the list of other players
 var players = [];
@@ -187,13 +188,23 @@ var players = [];
 // open up a socket to the server
 var socket = io.connect('http://'+socket_server_hostname+':31777');
 
-socket.on('welcome', function(name) {
-	playerName = name;
+socket.emit('connected', playerName);
+
+socket.on('welcome', function(playerData) {
+	//playerName = name;
+	console.log('your player info retrieved from the database:');
+	console.log(playerData);
+	playerLast.x = playerData.x;
+	playerLast.y = playerData.y;
+	playerLast.angle = playerData.angle;
+	// create the player ship
+	playerShip = new PlayerShip(playerLast.x, playerLast.y, playerLast.angle, scene);
+	gameIsReady = true;
 });
 
 socket.on('otherPlayers', function(otherPlayers) {
 	console.log(otherPlayers);
-	for (i = 0; i < otherPlayers.length; i++) {
+	for (var i = 0; i < otherPlayers.length; i++) {
 		if (otherPlayers[i].name == playerName) {
 			continue;
 		}
@@ -237,6 +248,15 @@ socket.on('removePlayer', function(name) {
 
 /*
 
+	stuff to track
+
+*/
+
+// create an array to hold the bullet objects
+var bullets = [];
+
+/*
+
 	player controls and button-mashing state
 
 */
@@ -251,6 +271,7 @@ var brake = false;
 // listen for keys going down, register them as player movement or whatever
 // event.keyCode reference: http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
 window.addEventListener('keydown', function(e) {
+	if (!gameIsReady) { return; }
 	switch (e.keyCode) {
 		case 87: // w
 		moveForward = true;
@@ -274,6 +295,7 @@ window.addEventListener('keydown', function(e) {
 
 // register keys coming back up, register them as stopping movement, or whatever
 window.addEventListener('keyup', function(e) {
+	if (!gameIsReady) { return; }
 	switch (e.keyCode) {
 		case 87: // w
 		moveForward = false;
@@ -317,10 +339,11 @@ window.addEventListener('keyup', function(e) {
 */
 
 var boxdir = true; // keep track of the little box's state
-var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
+	
+	if (!gameIsReady) { return; }
 	
 	// move the little box back and forth through the big box
 	if (boxdir == true && box2.position.y > -10) {
@@ -409,6 +432,7 @@ scene.registerBeforeRender(function () {
 */
 
 engine.runRenderLoop(function() {
+	if (!gameIsReady) { return; }
 	scene.render(); // render it!
 });
 
@@ -416,5 +440,3 @@ engine.runRenderLoop(function() {
 window.addEventListener("resize", function() {
 	engine.resize(); // resize the engine accordingly
 });
-
-gameIsReady = true;

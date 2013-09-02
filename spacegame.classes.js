@@ -142,7 +142,7 @@ OtherShip.prototype.dispose = function() {
 */
 
 
-function PlayerShip(x, y, scene) {
+function PlayerShip(x, y, angle, scene) {
 	
 	// location data
 	this.x = x;
@@ -157,7 +157,7 @@ function PlayerShip(x, y, scene) {
 	this.currentThrustingDirection = 0; // 0 = not moving, -1 = backwards, 1 = forwards
 	this.currentlyThrusting = false;
 	this.currentSpeed = 0.0;
-	this.currentRotation = 0.0;
+	this.currentRotation = angle;
 	this.movingRotation = 0.0;
 	this.oppositeMovingAngle = 0.0;
 	this.maxSpeed = 0.2;
