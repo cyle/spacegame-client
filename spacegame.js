@@ -404,7 +404,7 @@ scene.registerBeforeRender(function () {
 	
 	// let the server know our current stuff
 	if (playerLast.x != playerShip.x || playerLast.y != playerShip.y || playerLast.z != playerShip.z || playerLast.angle != playerShip.currentRotation) {
-		socket.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation, direction: playerShip.currentThrustingDirection });
+		socket.volatile.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation, direction: playerShip.currentThrustingDirection });
 		playerLast.x = playerShip.x;
 		playerLast.y = playerShip.y;
 		playerLast.z = playerShip.z;
