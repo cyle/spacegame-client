@@ -2,7 +2,9 @@
 
 Just load index.html into Chrome (or any browser that supports WebGL) and play!
 
-Note that this will not work on a computer that does not have hardware graphics acceleration.
+You will need two things: the server hostname/IP and your name. If you are a returning player, use the same name! If not, enter whatever name you want.
+
+Note that this will not work on a computer that does not have hardware graphics acceleration for WebGL. The only tested browser is **Chrome**.
 
 ## Important Note
 
@@ -21,7 +23,7 @@ After version 0.0.2, this now requires the SPACE GAME! server in order to play. 
 
 Controls:
 
-- `w` to thrust forward.
+- `w` to forward thrust.
 - `s` to reverse thrust.
 - `a` to rotate left.
 - `d` to rotate right.
@@ -29,7 +31,7 @@ Controls:
 - `shift` to decelerate (not the same as reversing thrust).
 - `space` to fire straight ahead.
 
-You can move around the camera a little by holding the left mouse button and dragging around.
+You can move around the camera a little by holding the left mouse button and dragging around, or using the arrow keys.
 
 ## About
 
@@ -42,7 +44,6 @@ This uses the [Babylon.js](http://www.babylonjs.com/) game engine thing, which i
 ## Planned Features / To-do list
 
 - Bullets actually do damage of some kind.
-- A proper HUD, not just a debug HUD.
 - Space stations.
 - Proper textures / models.
 - Mine-able/pick-up-able objects and trading.
