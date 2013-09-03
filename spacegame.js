@@ -100,6 +100,9 @@ var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 // create the list of other players
 var players = [];
 
+// set up socket.io config
+io.set('reconnect', false); // for now, don't bother reconnecting if the server goes down
+
 // open up a socket to the server
 var socket = io.connect('http://'+socket_server_hostname+':31777');
 
