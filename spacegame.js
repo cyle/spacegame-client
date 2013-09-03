@@ -207,7 +207,7 @@ socket.on('updatePlayer', function(data) {
 	}
 	for (i = 0; i < players.length; i++) {
 		if (players[i].name == data.name) {
-			players[i].update(data.x, data.y, data.angle);
+			players[i].update(data.x, data.y, data.angle, data.thrustDirection);
 		}
 	}
 });
@@ -401,7 +401,7 @@ scene.registerBeforeRender(function () {
 	
 	// let the server know our current stuff
 	if (playerLast.x != playerShip.x || playerLast.y != playerShip.y || playerLast.z != playerShip.z || playerLast.angle != playerShip.currentRotation) {
-		socket.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation });
+		socket.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation, direction: playerShip.currentThrustingDirection });
 		playerLast.x = playerShip.x;
 		playerLast.y = playerShip.y;
 		playerLast.z = playerShip.z;
