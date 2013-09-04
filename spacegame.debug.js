@@ -10,6 +10,7 @@ setInterval(function() {
 	}
 	debug_txt = '';
 	debug_txt += 'FPS: ' + BABYLON.Tools.GetFps().toPrecision(4) + '<br />';
+	debug_txt += 'dT: ' + prettyNum(deltaTime, 4) + '<br />';
 	debug_txt += 'X: ' + prettyNum(playerShip.x, 2) + '<br />';
 	debug_txt += 'Y: ' + prettyNum(playerShip.y, 2) + '<br />';
 	//debug_txt += 'CamA: ' + prettyNum(camera.alpha, 2) + '<br />';

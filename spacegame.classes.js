@@ -18,14 +18,14 @@ function Bullet(x, y, angle, scene) {
 	this.distanceTravelled = 0.0; // how far has it gone so far
 	this.distanceLimit = 30; // when should it stop travelling
 	this.distancePerTick = 0.0; // how many units does it travel per update
-	this.currentSpeed = 0.5; // the speed of it (constant)
+	this.currentSpeed = 35; // the speed of it (constant)
 	this.angle = angle; // the angle it's travelling at
 	this.bulletSphere = BABYLON.Mesh.CreateSphere("BULLET", 2.0, 0.25, scene); // the mesh itself
 	this.bulletSphere.position = new BABYLON.Vector3(this.x, this.y, this.z);
 	this.done = false; // has it reached its limit?
 }
 
-Bullet.prototype.update = function() {
+Bullet.prototype.update = function(dTime) {
 	if (this.done == true) { // if it has reached its limit, dispose of the mesh
 		if (this.bulletSphere.isDisposed() == false) {
 			this.bulletSphere.dispose(); // clear up resources
@@ -33,8 +33,8 @@ Bullet.prototype.update = function() {
 		return; // that's all
 	}
 	// travel:
-	this.x += Math.sin(this.angle) * -this.currentSpeed;
-	this.y += Math.cos(this.angle) * this.currentSpeed;
+	this.x += (Math.sin(this.angle) * -this.currentSpeed) * dTime;
+	this.y += (Math.cos(this.angle) * this.currentSpeed) * dTime;
 	if (this.distancePerTick == 0.0) { // figure out how far it travels per update
 		this.distancePerTick = Math.sqrt( Math.pow(this.x - this.bulletSphere.position.x, 2) + Math.pow(this.y - this.bulletSphere.position.y, 2) );
 	}
@@ -231,20 +231,22 @@ function PlayerShip(x, y, angle, scene) {
 	this.hpCurrent = 50;
 	this.hpMax = 50;
 	
-	// player box info
+	// player orientation/movement info
 	this.currentThrustingDirection = 0; // 0 = not moving, -1 = backwards, 1 = forwards
 	this.currentlyThrusting = false;
 	this.currentSpeed = 0.0;
 	this.currentRotation = angle;
 	this.movingRotation = 0.0;
 	this.oppositeMovingAngle = 0.0;
-	this.maxSpeed = 0.2;
-	this.minSpeed = -0.1;
-	this.accelerationRate = 0.005;
-	this.decelerationRate = 0.0075;
-	this.rotationRate = 0.05;
-	this.rotationThrustRate = 0.05;
-	this.instantTurnSpeed = 0.03; // speed at which the ship just turns instantly
+	
+	// player ship physics info
+	this.maxSpeed = 10; // in units per second
+	this.minSpeed = -4; // in units per second
+	this.accelerationRate = 5; // in units per second, constant
+	this.decelerationRate = 4; // in units per second, constant
+	this.rotationRate = 2; // in radians per second
+	this.rotationThrustRate = 2; // in radians per second
+	this.instantTurnSpeed = 3; // speed (units per second) at which the ship just turns instantly
 	this.acuteTurnThreshold = degreesToRadians(90); // +/- this number will be an easy "acute" turn
 	this.wideTurnThreshold = degreesToRadians(140); // between acute and this number will be a hard "wide" turn
 	
@@ -319,15 +321,18 @@ function PlayerShip(x, y, angle, scene) {
 		this.reverseThrusters[p].direction2 = new BABYLON.Vector3(2, 8, -1); // potential direction of each particle after it has been emitted
 	}
 	
+	//console.log('new player ship set up!');
+	//console.log(this);
+	
 }
 
-PlayerShip.prototype.rotate = function(direction) {
+PlayerShip.prototype.rotate = function(direction, dTime) {
 	
 	// rotate left or right based on direction given
 	if (direction < 0) {
-		this.currentRotation -= this.rotationRate; // left
+		this.currentRotation -= (this.rotationRate * dTime); // left
 	} else if (direction > 0) {
-		this.currentRotation += this.rotationRate; // right
+		this.currentRotation += (this.rotationRate * dTime); // right
 	}
 	
 	// keep rotation within bounds
@@ -339,14 +344,14 @@ PlayerShip.prototype.rotate = function(direction) {
 	
 }
 
-PlayerShip.prototype.brake = function() {
+PlayerShip.prototype.brake = function(dTime) {
 	if (this.currentSpeed > 0) {
-		this.currentSpeed -= this.decelerationRate;
+		this.currentSpeed -= (this.decelerationRate * dTime);
 		if (this.currentSpeed < 0) { // deceleration rate took us under zero, oops, fix it
 			this.currentSpeed = 0;
 		}
 	} else if (this.currentSpeed < 0) {
-		this.currentSpeed += this.decelerationRate;
+		this.currentSpeed += (this.decelerationRate * dTime);
 		if (this.currentSpeed > 0) { // deceleration rate took us over zero, oops, fix it
 			this.currentSpeed = 0;
 		}
@@ -363,27 +368,12 @@ PlayerShip.prototype.setDirection = function(direction) {
 	} else if (direction > 0) {
 		this.currentlyThrusting = true;
 		this.currentThrustingDirection = 1; // thrusting forward
-		/*
-		for (var i = 0; i < this.objects.length; i++) {
-			if (this.objects[i].hasOwnProperty('isThruster') && this.objects[i].isThruster == true) {
-				this.objects[i].isVisible = true;
-				this.objects[i].material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-			}
-		}
-		*/
 		for (var i = 0; i < this.forwardThrusters.length; i++) {
 			this.forwardThrusters[i].start();
 		}
 	} else {
 		this.currentlyThrusting = false; // not thrusting at all
 		this.currentThrustingDirection = 0;
-		/*
-		for (var i = 0; i < this.objects.length; i++) {
-			if (this.objects[i].hasOwnProperty('isThruster') && this.objects[i].isThruster == true) {
-				this.objects[i].isVisible = false;
-			}
-		}
-		*/
 		for (var i = 0; i < this.forwardThrusters.length; i++) {
 			this.forwardThrusters[i].stop();
 		}
@@ -393,16 +383,21 @@ PlayerShip.prototype.setDirection = function(direction) {
 	}
 }
 
-PlayerShip.prototype.collided = function() {
+PlayerShip.prototype.collided = function(dTime) {
 	for (var i = 0; i < this.objects.length; i++) {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
 	}
 	//console.log('collided with solid object');
 	this.movingRotation = this.oppositeMovingAngle;
-	this.currentSpeed = this.currentSpeed * 0.5;
-	this.objects[0].position.x += Math.sin(this.movingRotation) * -0.5;
-	this.objects[0].position.y += Math.cos(this.movingRotation) * 0.5;
+	this.currentSpeed = this.currentSpeed * 0.5; // cut speed in half
+	
+	this.objects[0].position.x += Math.sin(this.movingRotation) * -0.25; // bump away
+	this.objects[0].position.y += Math.cos(this.movingRotation) * 0.25; // bump away
+	
+	//this.objects[0].position.x += (Math.sin(this.movingRotation) * -4) * dTime; // bump away at 4 units per second
+	//this.objects[0].position.y += (Math.cos(this.movingRotation) * 4) * dTime; // bump away at 4 units per second
+	
 	// update our actual position
 	this.x = this.objects[0].position.x;
 	this.y = this.objects[0].position.y;
@@ -422,7 +417,7 @@ PlayerShip.prototype.invisible = function() {
 	}
 }
 
-PlayerShip.prototype.checkCollisions = function(scene) {
+PlayerShip.prototype.checkCollisions = function(scene, dTime) {
 
 	// set normal colors...
 	for (var i = 0; i < this.objects.length; i++) {
@@ -431,46 +426,44 @@ PlayerShip.prototype.checkCollisions = function(scene) {
 		this.objects[i].material.alpha = 1.0;
 	}
 	
-	// if we are not at the origin, go for it
-	if (this.x != 0 || this.y != 0) {
-		// has there been a collision...?
-		var collided = false;
-		
-		for (var i = 0; i < scene.meshes.length; i++) {
-			if (scene.meshes[i].hasOwnProperty('collideWith') && scene.meshes[i].collideWith == true) {
-				// if i can collide with it, check against all of the ship's meshes
-				for (j = 0; j < this.objects.length; j++) {
-					if (scene.meshes[i].intersectsMesh(this.objects[j], true)) {
-						// turn the origin box blue if it collides with something
-						if (scene.meshes[i].hasOwnProperty('solid') && scene.meshes[i].solid == true) {
-							this.collided();
-							collided = true;
-							break;
-						} else if (scene.meshes[i].hasOwnProperty('nebula') && scene.meshes[i].nebula == true) {
-							this.invisible();
-							collided = true;
-							break;
-						} else if (scene.meshes[i].hasOwnProperty('safeZone') && scene.meshes[i].safeZone == true) {
-							this.safeZoned();
-							collided = true;
-							break;
-						}
+	// has there been a collision...?
+	var collided = false;
+	
+	// go through all of the meshes in the scene, check for a collision
+	for (var i = 0; i < scene.meshes.length; i++) {
+		if (scene.meshes[i].hasOwnProperty('collideWith') && scene.meshes[i].collideWith == true) {
+			// if i can collide with it, check against all of the ship's meshes
+			for (j = 0; j < this.objects.length; j++) {
+				if (scene.meshes[i].intersectsMesh(this.objects[j], true)) {
+					// turn the origin box blue if it collides with something
+					if (scene.meshes[i].hasOwnProperty('solid') && scene.meshes[i].solid == true) {
+						this.collided(dTime);
+						collided = true;
+						break;
+					} else if (scene.meshes[i].hasOwnProperty('nebula') && scene.meshes[i].nebula == true) {
+						this.invisible();
+						collided = true;
+						break;
+					} else if (scene.meshes[i].hasOwnProperty('safeZone') && scene.meshes[i].safeZone == true) {
+						this.safeZoned();
+						collided = true;
+						break;
 					}
 				}
-				if (collided) { break; }
 			}
+			if (collided) { break; }
 		}
 	}
 }
 
-PlayerShip.prototype.update = function() {
+PlayerShip.prototype.update = function(dTime) {
 	// move the position of all objects the same way
-	
+		
 	// if something moved our player position, make it so
 	this.objects[0].position.x = this.x;
 	this.objects[0].position.y = this.y;
 	
-	// rotate just the origin element
+	// rotate just the origin element, all others are already tied to it
 	this.objects[0].rotation.z = this.currentRotation;
 	
 	// ok, go through everything
@@ -527,7 +520,7 @@ PlayerShip.prototype.update = function() {
 			//console.log('moving slowly, just go the new direction');
 			
 			this.movingRotation = this.currentRotation;
-			this.currentSpeed += this.accelerationRate * this.currentThrustingDirection;
+			this.currentSpeed += (this.accelerationRate * this.currentThrustingDirection)  * dTime;
 			
 		} else { // otherwise, use the above acute/wide/180 degree turn rules
 			
@@ -546,27 +539,27 @@ PlayerShip.prototype.update = function() {
 				//   we want to go from 290 to 360 and then from 0 to 25
 				// this is repeated in the "wide turn" section
 				if (this.currentRotation <= (Math.PI * 2) && this.currentRotation >= (Math.PI * 2 - this.acuteTurnThreshold) && this.movingRotation >= 0 && this.movingRotation <= this.acuteTurnThreshold) {
-					this.movingRotation -= this.rotationThrustRate;
+					this.movingRotation -= (this.rotationThrustRate * dTime);
 					if (this.movingRotation <= 0) {
 						this.movingRotation = Math.PI * 2;
 					}
 				} else if (this.movingRotation <= (Math.PI * 2) && this.movingRotation >= (Math.PI * 2 - this.acuteTurnThreshold) && this.currentRotation >= 0 && this.currentRotation <= this.acuteTurnThreshold) {
-					this.movingRotation += this.rotationThrustRate;
+					this.movingRotation += (this.rotationThrustRate * dTime);
 					if (this.movingRotation >= Math.PI * 2) {
 						this.movingRotation = 0;
 					}
 				} else {
 					if (this.currentRotation > this.movingRotation) {
-						this.movingRotation += this.rotationThrustRate;
+						this.movingRotation += (this.rotationThrustRate * dTime);
 					} else if (this.currentRotation < this.movingRotation) {
-						this.movingRotation -= this.rotationThrustRate;
+						this.movingRotation -= (this.rotationThrustRate * dTime);
 					}
 				}
 				
 				if (angleDiff < (Math.PI/2)) {
-					this.currentSpeed += this.accelerationRate * this.currentThrustingDirection;
+					this.currentSpeed += (this.accelerationRate * this.currentThrustingDirection) * dTime;
 				} else {
-					this.currentSpeed -= this.accelerationRate * this.currentThrustingDirection;
+					this.currentSpeed -= (this.accelerationRate * this.currentThrustingDirection) * dTime;
 				}
 				
 			} else if (angleDiff > this.acuteTurnThreshold && angleDiff <= this.wideTurnThreshold) {
@@ -575,27 +568,27 @@ PlayerShip.prototype.update = function() {
 				//console.log('performing a WIDE turn');
 				
 				if (this.currentRotation <= (Math.PI * 2) && this.currentRotation >= (Math.PI * 2 - this.wideTurnThreshold) && this.movingRotation >= 0 && this.movingRotation <= this.wideTurnThreshold) {
-					this.movingRotation -= this.rotationThrustRate * 0.5;
+					this.movingRotation -= (this.rotationThrustRate * 0.5) * dTime;
 					if (this.movingRotation <= 0) {
 						this.movingRotation = Math.PI * 2;
 					}
 				} else if (this.movingRotation <= (Math.PI * 2) && this.movingRotation >= (Math.PI * 2 - this.wideTurnThreshold) && this.currentRotation >= 0 && this.currentRotation <= this.wideTurnThreshold) {
-					this.movingRotation += this.rotationThrustRate * 0.5;
+					this.movingRotation += (this.rotationThrustRate * 0.5) * dTime;
 					if (this.movingRotation >= Math.PI * 2) {
 						this.movingRotation = 0;
 					}
 				} else {
 					if (this.currentRotation > this.movingRotation) {
-						this.movingRotation += this.rotationThrustRate * 0.5;
+						this.movingRotation += (this.rotationThrustRate * 0.5) * dTime;
 					} else if (this.currentRotation < this.movingRotation) {
-						this.movingRotation -= this.rotationThrustRate * 0.5;
+						this.movingRotation -= (this.rotationThrustRate * 0.5) * dTime;
 					}
 				}
 				
 				if (angleDiff < (Math.PI/2)) {
-					this.currentSpeed += (this.accelerationRate * 0.5) * this.currentThrustingDirection;
+					this.currentSpeed += ((this.accelerationRate * 0.5) * this.currentThrustingDirection) * dTime;
 				} else {
-					this.currentSpeed -= (this.accelerationRate * 0.5) * this.currentThrustingDirection;
+					this.currentSpeed -= ((this.accelerationRate * 0.5) * this.currentThrustingDirection) * dTime;
 				}
 				
 			} else {
@@ -604,9 +597,9 @@ PlayerShip.prototype.update = function() {
 				//console.log('performing a 180-DEGREE turn');
 				
 				if (this.currentSpeed > 0) { // slow down to 0 speed before continuing before continuing along the new angle
-					this.currentSpeed -= (this.accelerationRate * 0.25) * this.currentThrustingDirection;
+					this.currentSpeed -= ((this.accelerationRate * 0.25) * this.currentThrustingDirection) * dTime;
 				} else if (currentSpeed < 0) { // speed up to 0 speed before continuing along the new angle
-					this.currentSpeed += (this.accelerationRate * 0.25) * this.currentThrustingDirection;
+					this.currentSpeed += ((this.accelerationRate * 0.25) * this.currentThrustingDirection) * dTime;
 				}
 			}
 			
@@ -616,7 +609,7 @@ PlayerShip.prototype.update = function() {
 		
 		// just accelerate!
 		//console.log('no turning, just accelerating');
-		this.currentSpeed += this.accelerationRate * this.currentThrustingDirection;
+		this.currentSpeed += (this.accelerationRate * this.currentThrustingDirection) * dTime;
 		
 	} else {
 		
@@ -634,8 +627,8 @@ PlayerShip.prototype.update = function() {
 	}
 
 	// move just the origin element
-	this.objects[0].position.x += Math.sin(this.movingRotation) * -this.currentSpeed;
-	this.objects[0].position.y += Math.cos(this.movingRotation) * this.currentSpeed;
+	this.objects[0].position.x += (Math.sin(this.movingRotation) * -this.currentSpeed) * dTime;
+	this.objects[0].position.y += (Math.cos(this.movingRotation) * this.currentSpeed) * dTime;
 	
 	// update our actual position
 	this.x = this.objects[0].position.x;

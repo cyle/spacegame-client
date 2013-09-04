@@ -100,11 +100,8 @@ var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
 // create the list of other players
 var players = [];
 
-// set up socket.io config
-io.set('reconnect', false); // for now, don't bother reconnecting if the server goes down
-
 // open up a socket to the server
-var socket = io.connect('http://'+socket_server_hostname+':31777');
+var socket = io.connect('http://'+socket_server_hostname+':31777', { 'reconnect': false }); // for now, don't bother reconnecting if the server goes down
 
 socket.emit('connected', playerName);
 
@@ -128,6 +125,7 @@ socket.on('area-data', function(newArea) {
 socket.on('current-area-data', function(newArea) {
 	// take incoming area data
 	
+	//console.log('getting current area...');
 	//console.log(newArea);
 	
 	area = newArea;
@@ -189,6 +187,8 @@ socket.on('current-area-data', function(newArea) {
 		}
 	}
 	
+	//console.log('area built, game ready!');
+	
 	gameIsReady = true;
 });
 
@@ -203,11 +203,7 @@ socket.on('otherPlayers', function(otherPlayers) {
 });
 
 socket.on('updatePlayer', function(data) {
-	//console.log('a player moved!');
-	//console.log(data);
-	if (playerName == data.name) {
-		return;
-	}
+	// update when another player moves
 	for (i = 0; i < players.length; i++) {
 		if (players[i].name == data.name) {
 			players[i].update(data.x, data.y, data.angle, data.thrustDirection);
@@ -216,11 +212,7 @@ socket.on('updatePlayer', function(data) {
 });
 
 socket.on('newPlayer', function(data) {
-	//console.log(data);
 	// set up a new other player ship
-	if (data.name == playerName) {
-		return;
-	}
 	console.log('a new player arrived: ' + data.name);
 	players.push( new OtherShip(data.name, data.x, data.y, data.angle, scene) );
 });
@@ -329,11 +321,27 @@ window.addEventListener('keyup', function(e) {
 */
 
 var boxdir = true; // keep track of the little box's state
+var deltaTime = 0;
 
 // this is the pre-render update() loop
 scene.registerBeforeRender(function () {
 	
 	if (!gameIsReady) { return; }
+	
+	/*
+	
+		get the deltaTime between frames
+	
+	*/
+	
+	deltaTime = BABYLON.Tools.GetDeltaTime()/1000; // divide by 1000 to get per second
+	if (deltaTime > 0.25) { // this makes deltaTime stick to above 4fps
+		deltaTime = 0.25;
+	} else if (deltaTime < 0.01) { // this makes deltaTime stick to below 100fps
+		deltaTime = 0.01;
+	}
+	
+	//console.log('this frames deltaTime is: ' + deltaTime);
 	
 	/*
 	
@@ -343,9 +351,9 @@ scene.registerBeforeRender(function () {
 	
 	// ship rotation
 	if (rotateLeft && !rotateRight) { // rotate left
-		playerShip.rotate(-1);
+		playerShip.rotate(-1, deltaTime);
 	} else if (!rotateLeft && rotateRight) { // rotate right
-		playerShip.rotate(1);
+		playerShip.rotate(1, deltaTime);
 	}
 	
 	// thrust forward / reverse
@@ -363,37 +371,37 @@ scene.registerBeforeRender(function () {
 	}
 	
 	if (brake) { // if braking, slow down the player ship
-		playerShip.brake();
+		playerShip.brake(deltaTime);
 	}
 	
-	playerShip.update(); // ok, update the player's ship position
+	playerShip.update(deltaTime); // ok, update the player's ship position
 	
 	// keep the player ship within the area's X bounds
 	if (playerShip.x > area.width) {
 		playerShip.x = area.width;
-		playerShip.collided(); // ok, update the player's ship position
+		playerShip.collided(deltaTime); // ok, update the player's ship position
 	} else if (playerShip.x < 0) {
 		playerShip.x = 0;
-		playerShip.collided(); // ok, update the player's ship position
+		playerShip.collided(deltaTime); // ok, update the player's ship position
 	}
 	
 	// keep the player within the area's Y bounds
 	if (playerShip.y > area.height) {
 		playerShip.y = area.height;
-		playerShip.collided(); // ok, update the player's ship position
+		playerShip.collided(deltaTime); // ok, update the player's ship position
 	} else if (playerShip.y < 0) {
 		playerShip.y = 0;
-		playerShip.collided(); // ok, update the player's ship position
+		playerShip.collided(deltaTime); // ok, update the player's ship position
 	}
 	
-	playerShip.checkCollisions(scene); // check for collisions, update the ship appropriately
+	playerShip.checkCollisions(scene, deltaTime); // check for collisions, update the ship appropriately
 	
 	// go through the bullets, update their positions
 	for (i = 0; i < bullets.length; i++) { 
-		bullets[i].update(); // update!
+		bullets[i].update(deltaTime); // update!
 		bullets[i].checkCollisions(scene); // check to see if the bullet hit anything
 		if (bullets[i].done == true) {
-			bullets[i].update(); // run its own cleanup
+			bullets[i].update(deltaTime); // run its own cleanup
 			bullets.splice(i, 1); // remove from the array of bullets
 		}
 	}
@@ -404,7 +412,7 @@ scene.registerBeforeRender(function () {
 	
 	// let the server know our current stuff
 	if (playerLast.x != playerShip.x || playerLast.y != playerShip.y || playerLast.z != playerShip.z || playerLast.angle != playerShip.currentRotation) {
-		socket.volatile.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation, direction: playerShip.currentThrustingDirection });
+		socket.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation, direction: playerShip.currentThrustingDirection });
 		playerLast.x = playerShip.x;
 		playerLast.y = playerShip.y;
 		playerLast.z = playerShip.z;
