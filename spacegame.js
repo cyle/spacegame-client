@@ -79,7 +79,7 @@ ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
 // import this spaceship mesh -- not sure what to do with it yet, but wanted to test importing
 // BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", scene, function (newMeshes, particleSystems) {
 // 	//console.log(newMeshes);
-// 	for (i = 0; i < newMeshes.length; i++) {
+// 	for (var i = 0; i < newMeshes.length; i++) {
 // 		newMeshes[i].scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
 // 		newMeshes[i].position = new BABYLON.Vector3(0, 10, 0);
 // 		newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
@@ -204,8 +204,8 @@ socket.on('otherPlayers', function(otherPlayers) {
 
 socket.on('updatePlayer', function(data) {
 	// update when another player moves
-	for (i = 0; i < players.length; i++) {
-		if (players[i].name == data.name) {
+	for (var i = 0; i < players.length; i++) {
+		if (players[i].name == data.name && players[i].done == false) {
 			players[i].update(data.x, data.y, data.angle, data.thrustDirection);
 		}
 	}
@@ -220,10 +220,11 @@ socket.on('newPlayer', function(data) {
 socket.on('removePlayer', function(name) {
 	console.log('a player left: ' + name);
 	//console.log(data);
-	for (i = 0; i < players.length; i++) {
+	for (var i = 0; i < players.length; i++) {
 		if (players[i].name == name) {
-			players[i].dispose();
-			players.splice(i, 1);
+			players[i].done = true;
+			//players[i].dispose();
+			//players.splice(i, 1);
 		}
 	}
 });
@@ -345,6 +346,19 @@ scene.registerBeforeRender(function () {
 	
 	/*
 	
+		checking to see if any of the other ships have left
+		
+	*/
+	
+	for (var i = 0; i < players.length; i++) {
+		if (players[i].done == true) {
+			players[i].dispose();
+			players.splice(i, 1);
+		}
+	}
+	
+	/*
+	
 		updating the player ship
 	
 	*/
@@ -397,7 +411,7 @@ scene.registerBeforeRender(function () {
 	playerShip.checkCollisions(scene, deltaTime); // check for collisions, update the ship appropriately
 	
 	// go through the bullets, update their positions
-	for (i = 0; i < bullets.length; i++) { 
+	for (var i = 0; i < bullets.length; i++) { 
 		bullets[i].update(deltaTime); // update!
 		bullets[i].checkCollisions(scene); // check to see if the bullet hit anything
 		if (bullets[i].done == true) {

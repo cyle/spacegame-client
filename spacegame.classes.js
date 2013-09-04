@@ -77,6 +77,7 @@ function OtherShip(name, x, y, angle, scene) {
 	this.currentRotation = angle;
 	this.hpCurrent = 50;
 	this.hpMax = 50;
+	this.done = false;
 	
 	this.objects = []; // will hold all of the meshes that make up this object
 	this.forwardThrusters = [];
@@ -155,6 +156,8 @@ function OtherShip(name, x, y, angle, scene) {
 		this.reverseThrusters[p].direction2 = new BABYLON.Vector3(2, 8, -1); // potential direction of each particle after it has been emitted
 	}
 	
+	this.update(this.x, this.y, this.currentRotation, 0); // run an update on yourself to orient things properly
+	
 }
 
 OtherShip.prototype.update = function(x, y, angle, direction) {
@@ -206,8 +209,11 @@ OtherShip.prototype.update = function(x, y, angle, direction) {
 }
 
 OtherShip.prototype.dispose = function() {
-	if (this.objects[0].isDisposed() == false) {
-		this.objects[0].dispose(); // clear up resources
+	console.log('disposing of ' + this.name);
+	for (var i = 0; i < this.objects.length; i++) {
+		if (this.objects[i].isDisposed() == false) {
+			this.objects[i].dispose(); // clear up resources
+		}
 	}
 }
 
