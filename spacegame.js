@@ -95,7 +95,7 @@ ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
 // this player's name
 //var playerName = ''; // set earlier...
 var playerShip = undefined;
-var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0 };
+var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0, direction: 0, state: 'normal' };
 
 // create the list of other players
 var players = [];
@@ -204,6 +204,7 @@ socket.on('otherPlayers', function(otherPlayers) {
 
 socket.on('updatePlayer', function(data) {
 	// update when another player moves
+	//console.log('player ' + data.name + ' moved!');
 	for (var i = 0; i < players.length; i++) {
 		if (players[i].name == data.name && players[i].done == false) {
 			players[i].update(data.x, data.y, data.angle, data.thrustDirection);
@@ -216,7 +217,7 @@ socket.on('updatePlayer', function(data) {
 });
 
 socket.on('removePlayer', function(name) {
-	console.log('a player left: ' + name);
+	//console.log('a player left: ' + name);
 	//console.log(data);
 	for (var i = 0; i < players.length; i++) {
 		if (players[i].name == name) {
@@ -424,11 +425,12 @@ scene.registerBeforeRender(function () {
 	
 	// let the server know our current stuff
 	if (playerLast.x != playerShip.x || playerLast.y != playerShip.y || playerLast.z != playerShip.z || playerLast.angle != playerShip.currentRotation) {
-		socket.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation, direction: playerShip.currentThrustingDirection });
+		socket.emit('move', { x: playerShip.x, y: playerShip.y, angle: playerShip.currentRotation, direction: playerShip.currentThrustingDirection, state: playerShip.playerState });
 		playerLast.x = playerShip.x;
 		playerLast.y = playerShip.y;
 		playerLast.z = playerShip.z;
 		playerLast.angle = playerShip.currentRotation;
+		playerLast.state = playerShip.playerState;
 	}
 		
 });
