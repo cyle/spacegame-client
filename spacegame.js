@@ -207,12 +207,10 @@ socket.on('updatePlayer', function(data) {
 	for (var i = 0; i < players.length; i++) {
 		if (players[i].name == data.name && players[i].done == false) {
 			players[i].update(data.x, data.y, data.angle, data.thrustDirection);
+			return; // done!
 		}
 	}
-});
-
-socket.on('newPlayer', function(data) {
-	// set up a new other player ship
+	// must be a new player -- add them
 	console.log('a new player arrived: ' + data.name);
 	players.push( new OtherShip(data.name, data.x, data.y, data.angle, scene) );
 });
