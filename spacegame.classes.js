@@ -237,6 +237,9 @@ function PlayerShip(x, y, angle, scene) {
 	this.hpCurrent = 50;
 	this.hpMax = 50;
 	
+	// player state
+	this.playerState = 'normal'; // may hold values like: invisible, ..., ...
+	
 	// player orientation/movement info
 	this.currentThrustingDirection = 0; // 0 = not moving, -1 = backwards, 1 = forwards
 	this.currentlyThrusting = false;
@@ -421,6 +424,7 @@ PlayerShip.prototype.invisible = function() {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.alpha = 0.15;
 	}
+	this.playerState = 'invisible';
 }
 
 PlayerShip.prototype.checkCollisions = function(scene, dTime) {
@@ -464,7 +468,10 @@ PlayerShip.prototype.checkCollisions = function(scene, dTime) {
 
 PlayerShip.prototype.update = function(dTime) {
 	// move the position of all objects the same way
-		
+	
+	// reset player state to normal
+	this.playerState = 'normal';
+	
 	// if something moved our player position, make it so
 	this.objects[0].position.x = this.x;
 	this.objects[0].position.y = this.y;
