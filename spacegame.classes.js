@@ -20,26 +20,27 @@ function Bullet(x, y, angle, scene) {
 	this.distancePerTick = 0.0; // how many units does it travel per update
 	this.currentSpeed = 35; // the speed of it (constant)
 	this.angle = angle; // the angle it's travelling at
-	this.bulletSphere = BABYLON.Mesh.CreateSphere("BULLET", 2.0, 0.25, scene); // the mesh itself
-	this.bulletSphere.position = new BABYLON.Vector3(this.x, this.y, this.z);
+	this.bulletSpriteManager = new BABYLON.SpriteManager('bulletSprites', 'assets/blaster.png', 2, 10, scene);
+	this.bulletSprite = new BABYLON.Sprite('bullet', this.bulletSpriteManager);
+	this.bulletSprite.position = new BABYLON.Vector3(this.x, this.y, this.z);
+	this.bulletSprite.angle = this.angle * -1; // for some reason sprite angles are inverted
+	//this.bulletSprite.invertV = -1;
 	this.done = false; // has it reached its limit?
 }
 
 Bullet.prototype.update = function(dTime) {
 	if (this.done == true) { // if it has reached its limit, dispose of the mesh
-		if (this.bulletSphere.isDisposed() == false) {
-			this.bulletSphere.dispose(); // clear up resources
-		}
+		this.bulletSpriteManager.dispose(); // clear up resources
 		return; // that's all
 	}
 	// travel:
 	this.x += (Math.sin(this.angle) * -this.currentSpeed) * dTime;
 	this.y += (Math.cos(this.angle) * this.currentSpeed) * dTime;
 	if (this.distancePerTick == 0.0) { // figure out how far it travels per update
-		this.distancePerTick = Math.sqrt( Math.pow(this.x - this.bulletSphere.position.x, 2) + Math.pow(this.y - this.bulletSphere.position.y, 2) );
+		this.distancePerTick = Math.sqrt( Math.pow(this.x - this.bulletSprite.position.x, 2) + Math.pow(this.y - this.bulletSprite.position.y, 2) );
 	}
-	this.bulletSphere.position.x = this.x; // set the mesh's position
-	this.bulletSphere.position.y = this.y;
+	this.bulletSprite.position.x = this.x; // set the mesh's position
+	this.bulletSprite.position.y = this.y;
 	this.distanceTravelled += this.distancePerTick; // add how far it's gone so far
 	if (this.distanceTravelled >= this.distanceLimit) { // gone far enough?
 		this.done = true; // done, kid
@@ -49,7 +50,7 @@ Bullet.prototype.update = function(dTime) {
 Bullet.prototype.checkCollisions = function(scene) {	
 	for (j = 0; j < scene.meshes.length; j++) {
 		//console.log('checking if bullet hit ' + scene.meshes[i].name);
-		if (scene.meshes[j].name != 'BULLET' && scene.meshes[j].hasOwnProperty('solid') && scene.meshes[j].solid == true && scene.meshes[j].intersectsMesh(this.bulletSphere, true)) {
+		if (scene.meshes[j].name != 'BULLET' && scene.meshes[j].hasOwnProperty('solid') && scene.meshes[j].solid == true && scene.meshes[j].intersectsMesh(this.bulletSprite, true)) {
 			console.log('bullet hit ' + scene.meshes[j].name);
 			if (scene.meshes[j].name.indexOf('asteroid') !== -1) {
 				scene.meshes[j].dispose();
