@@ -20,16 +20,27 @@ function Bullet(x, y, angle, scene) {
 	this.distancePerTick = 0.0; // how many units does it travel per update
 	this.currentSpeed = 35; // the speed of it (constant)
 	this.angle = angle; // the angle it's travelling at
+	
+	// the bullet's sprite
 	this.bulletSpriteManager = new BABYLON.SpriteManager('bulletSprites', 'assets/blaster.png', 2, 10, scene);
 	this.bulletSprite = new BABYLON.Sprite('bullet', this.bulletSpriteManager);
 	this.bulletSprite.position = new BABYLON.Vector3(this.x, this.y, this.z);
 	this.bulletSprite.angle = this.angle * -1; // for some reason sprite angles are inverted
-	//this.bulletSprite.invertV = -1;
+	
+	// the hit box
+	this.hitBox = new BABYLON.Mesh.CreateBox('bullet-hitbox', 1, scene);
+	this.hitBox.position = this.bulletSprite.position;
+	this.hitBox.rotation.z = angle;
+	this.hitBox.isVisible = false;
+	
+	// state
 	this.done = false; // has it reached its limit?
+	this.didHit = false; // has it hit something?
 }
 
 Bullet.prototype.update = function(dTime) {
 	if (this.done == true) { // if it has reached its limit, dispose of the mesh
+		this.hitBox.dispose();
 		this.bulletSpriteManager.dispose(); // clear up resources
 		return; // that's all
 	}
@@ -39,8 +50,9 @@ Bullet.prototype.update = function(dTime) {
 	if (this.distancePerTick == 0.0) { // figure out how far it travels per update
 		this.distancePerTick = Math.sqrt( Math.pow(this.x - this.bulletSprite.position.x, 2) + Math.pow(this.y - this.bulletSprite.position.y, 2) );
 	}
-	this.bulletSprite.position.x = this.x; // set the mesh's position
+	this.bulletSprite.position.x = this.x; // set the sprite's position
 	this.bulletSprite.position.y = this.y;
+	this.hitBox.position = this.bulletSprite.position; // move the hitbox
 	this.distanceTravelled += this.distancePerTick; // add how far it's gone so far
 	if (this.distanceTravelled >= this.distanceLimit) { // gone far enough?
 		this.done = true; // done, kid
@@ -50,8 +62,9 @@ Bullet.prototype.update = function(dTime) {
 Bullet.prototype.checkCollisions = function(scene) {	
 	for (j = 0; j < scene.meshes.length; j++) {
 		//console.log('checking if bullet hit ' + scene.meshes[i].name);
-		if (scene.meshes[j].name != 'BULLET' && scene.meshes[j].hasOwnProperty('solid') && scene.meshes[j].solid == true && scene.meshes[j].intersectsMesh(this.bulletSprite, true)) {
+		if (scene.meshes[j].name != 'BULLET' && scene.meshes[j].hasOwnProperty('solid') && scene.meshes[j].solid == true && scene.meshes[j].intersectsMesh(this.hitBox, true)) {
 			console.log('bullet hit ' + scene.meshes[j].name);
+			this.didHit = { x: scene.meshes[j].position.x, y: scene.meshes[j].position.y };
 			if (scene.meshes[j].name.indexOf('asteroid') !== -1) {
 				scene.meshes[j].dispose();
 			}

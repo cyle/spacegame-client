@@ -320,6 +320,8 @@ window.addEventListener('keyup', function(e) {
 
 */
 
+var spriteTestManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
+
 var boxdir = true; // keep track of the little box's state
 var deltaTime = 0;
 
@@ -414,6 +416,13 @@ scene.registerBeforeRender(function () {
 		bullets[i].update(deltaTime); // update!
 		bullets[i].checkCollisions(scene); // check to see if the bullet hit anything
 		if (bullets[i].done == true) {
+			if (bullets[i].didHit != false) {
+				// explosion!
+				spriteTest = new BABYLON.Sprite('test-sprite', spriteTestManager);
+				spriteTest.position = new BABYLON.Vector3(bullets[i].didHit.x, bullets[i].didHit.y, 0);
+				spriteTest.size = 7;
+				spriteTest.playAnimation(0, 12, false, 50);
+			}
 			bullets[i].update(deltaTime); // run its own cleanup
 			bullets.splice(i, 1); // remove from the array of bullets
 		}
