@@ -11,6 +11,22 @@ while (playerName == undefined || playerName == '') {
 	playerName = prompt('Your name?');
 }
 
+// sounds
+var canPlaySounds = false;
+var blasterSound = null;
+if (!createjs.Sound.initializeDefaultPlugins()) { console.log('Cannot load sound library!'); } // if initializeDefaultPlugins returns false, we cannot play sound in this browser
+var audio_manifest = [
+	{ id: 'blaster', src: 'audio/blaster.wav' }
+];
+ 
+createjs.Sound.addEventListener("loadComplete", handleAudioLoad);
+createjs.Sound.registerManifest(audio_manifest);
+ 
+function handleAudioLoad(event) {
+	canPlaySounds = true;
+	blasterSound = createjs.Sound.createInstance('blaster');
+}
+
 // the canvas element is where the magic happens
 var canvas = document.getElementById("render");
 var engine = new BABYLON.Engine(canvas, true); // load the BABYLON engine
@@ -307,7 +323,8 @@ window.addEventListener('keyup', function(e) {
 		case 32: // space bar
 		// fire straight ahead!
 		bullets.push( new Bullet( playerShip.x, playerShip.y, playerShip.currentRotation, scene ) );
-		document.getElementById('blaster-sound').play(); // play the blaster sound!
+		//document.getElementById('blaster-sound').play(); // play the blaster sound!
+		blasterSound.play();
 		break;
 		default:
 		//console.log('key released: ' + e.keyCode);
