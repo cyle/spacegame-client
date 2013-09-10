@@ -104,6 +104,15 @@ ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
 
 /*
 
+	stuff to track
+
+*/
+
+// create an array to hold the bullet objects
+var bullets = [];
+
+/*
+
 	load multiplayer stuff
 
 */
@@ -238,20 +247,39 @@ socket.on('removePlayer', function(name) {
 	for (var i = 0; i < players.length; i++) {
 		if (players[i].name == name) {
 			players[i].done = true;
-			//players[i].dispose();
-			//players.splice(i, 1);
 		}
 	}
 });
 
-/*
+socket.on('updateBullet', function(data) {
+	// update bullet from server
+	for (var i = 0; i < bullets.length; i++) {
+		if (bullets[i].id == data.id) {
+			bullets[i].update(data.x, data.y, data.angle);
+			return;
+		}
+	}
+	// must be a new bullet -- add it
+	console.log('new bullet fired!');
+	bullets.push( new Bullet( data.id, data.x, data.y, data.angle, scene ) );
+});
 
-	stuff to track
-
-*/
-
-// create an array to hold the bullet objects
-var bullets = [];
+socket.on('removeBullet', function(data) {
+	// remove bullet
+	// explode it?
+	for (var i = 0; i < bullets.length; i++) {
+		if (bullets[i].id == data.id) {
+			bullets[i].done = true;
+		}
+	}
+	if (data.didHit != false) {
+		// explosion!
+		var explosionSprite = new BABYLON.Sprite('explosion', explosionSpriteManager);
+		explosionSprite.position = new BABYLON.Vector3(data.didHit.x, data.didHit.y, 0);
+		explosionSprite.size = 7;
+		explosionSprite.playAnimation(0, 12, false, 50);
+	}
+});
 
 /*
 
@@ -322,8 +350,7 @@ window.addEventListener('keyup', function(e) {
 		break;
 		case 32: // space bar
 		// fire straight ahead!
-		bullets.push( new Bullet( playerShip.x, playerShip.y, playerShip.currentRotation, scene ) );
-		//document.getElementById('blaster-sound').play(); // play the blaster sound!
+		socket.emit('fired', { weaponType: 'test' });
 		blasterSound.play();
 		break;
 		default:
@@ -337,7 +364,7 @@ window.addEventListener('keyup', function(e) {
 
 */
 
-var spriteTestManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
+var explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
 
 var boxdir = true; // keep track of the little box's state
 var deltaTime = 0;
@@ -362,16 +389,19 @@ scene.registerBeforeRender(function () {
 	
 	//console.log('this frames deltaTime is: ' + deltaTime);
 	
-	/*
-	
-		checking to see if any of the other ships have left
-		
-	*/
-	
+	// check to see if any of the other ships have left
 	for (var i = 0; i < players.length; i++) {
 		if (players[i].done == true) {
 			players[i].dispose();
 			players.splice(i, 1);
+		}
+	}
+	
+	// go through the bullets, see if any should be deleted
+	for (var i = 0; i < bullets.length; i++) {
+		if (bullets[i].done == true) {
+			bullets[i].dispose();
+			bullets.splice(i, 1); // remove from the array of bullets
 		}
 	}
 	
@@ -427,23 +457,6 @@ scene.registerBeforeRender(function () {
 	}
 	
 	playerShip.checkCollisions(scene, deltaTime); // check for collisions, update the ship appropriately
-	
-	// go through the bullets, update their positions
-	for (var i = 0; i < bullets.length; i++) { 
-		bullets[i].update(deltaTime); // update!
-		bullets[i].checkCollisions(scene); // check to see if the bullet hit anything
-		if (bullets[i].done == true) {
-			if (bullets[i].didHit != false) {
-				// explosion!
-				spriteTest = new BABYLON.Sprite('test-sprite', spriteTestManager);
-				spriteTest.position = new BABYLON.Vector3(bullets[i].didHit.x, bullets[i].didHit.y, 0);
-				spriteTest.size = 7;
-				spriteTest.playAnimation(0, 12, false, 50);
-			}
-			bullets[i].update(deltaTime); // run its own cleanup
-			bullets.splice(i, 1); // remove from the array of bullets
-		}
-	}
 	
 	// the camera needs to stay fixed on the player ship
 	camera.target.x = playerShip.x;
