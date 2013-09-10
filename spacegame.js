@@ -273,11 +273,15 @@ socket.on('removeBullet', function(data) {
 		}
 	}
 	if (data.didHit != false) {
+		console.log('player ' + data.didHit.playerName + ' was hit!');
 		// explosion!
 		var explosionSprite = new BABYLON.Sprite('explosion', explosionSpriteManager);
 		explosionSprite.position = new BABYLON.Vector3(data.didHit.x, data.didHit.y, 0);
 		explosionSprite.size = 7;
 		explosionSprite.playAnimation(0, 12, false, 50);
+		if (data.didHit.playerName == playerName) {
+			playerShip.damage( data.didHit.damage );
+		}
 	}
 });
 
@@ -364,7 +368,7 @@ window.addEventListener('keyup', function(e) {
 
 */
 
-var explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
+var explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 500, 200, scene);
 
 var boxdir = true; // keep track of the little box's state
 var deltaTime = 0;

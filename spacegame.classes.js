@@ -408,6 +408,10 @@ PlayerShip.prototype.invisible = function() {
 	this.playerState = 'invisible';
 }
 
+PlayerShip.prototype.damage = function(amount) {
+	this.hpCurrent -= amount;
+}
+
 PlayerShip.prototype.checkCollisions = function(scene, dTime) {
 
 	// set normal colors...
