@@ -4,6 +4,31 @@
 
 */
 
+/*
+
+	salvage
+	
+*/
+
+function Salvage(id, x, y, scene) {
+	// meta info
+	this.id = id;
+	
+	// position info
+	this.x = x;
+	this.y = y;
+	this.z = 0.0;
+	
+	// the salvage object
+	this.salvageSphere = new BABYLON.Mesh.CreateSphere("salvage " + this.id, 5.0, 2.0, scene);
+	this.salvageSphere.position = new BABYLON.Vector3(this.x, this.y, this.z);
+	this.salvageSphere.material = new BABYLON.StandardMaterial("salvage-material", scene);
+	this.salvageSphere.material.diffuseColor = new BABYLON.Color4(0.5, 0, 0.5, 1);
+}
+
+Salvage.prototype.dispose = function() {
+	this.salvageSphere.dispose();
+}
 
 /*
 

@@ -111,6 +111,9 @@ ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
 // create an array to hold the bullet objects
 var bullets = [];
 
+// create an array to hold the salvage-able objects
+var salvages = [];
+
 /*
 
 	load multiplayer stuff
@@ -285,6 +288,21 @@ socket.on('removeBullet', function(data) {
 	}
 });
 
+socket.on('newSalvage', function(data) {
+	console.log('new salvage!');
+	console.log(data);
+	salvages.push( new Salvage( data.id, data.x, data.y, scene ) );
+});
+
+socket.on('removeSalvage', function(data) {
+	console.log('remove salvage #' + data.id);
+	for (var i = 0; i < salvages.length; i++) {
+		if (salvages[i].id == data.id) {
+			salvages[i].done = true;
+		}
+	}
+});
+
 /*
 
 	player controls and button-mashing state
@@ -406,6 +424,14 @@ scene.registerBeforeRender(function () {
 		if (bullets[i].done == true) {
 			bullets[i].dispose();
 			bullets.splice(i, 1); // remove from the array of bullets
+		}
+	}
+	
+	// go through the salvage objects, see if any should be deleted
+	for (var i = 0; i < salvages.length; i++) {
+		if (salvages[i].done == true) {
+			salvages[i].dispose();
+			salvages.splice(i, 1); // remove from the array of salvages
 		}
 	}
 	
