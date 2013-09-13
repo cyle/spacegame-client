@@ -304,6 +304,25 @@ socket.on('removeSalvage', function(data) {
 	}
 });
 
+socket.on('salvaged', function(data) {
+	console.log('salvaged!');
+	console.log(data);
+	/*
+	var pointA = new BABYLON.Mesh.CreateSphere("point A", 3.0, 1.0, scene);
+	pointA.position = new BABYLON.Vector3(data.a.x, data.a.y, 0);
+	pointA.material = new BABYLON.StandardMaterial("salvage-point-material", scene);
+	pointA.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
+	var pointB = new BABYLON.Mesh.CreateSphere("point B", 3.0, 1.0, scene);
+	pointB.position = new BABYLON.Vector3(data.b.x, data.b.y, 0);
+	pointB.material = new BABYLON.StandardMaterial("salvage-point-material", scene);
+	pointB.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
+	var pointC = new BABYLON.Mesh.CreateSphere("point C", 3.0, 1.0, scene);
+	pointC.position = new BABYLON.Vector3(data.c.x, data.c.y, 0);
+	pointC.material = new BABYLON.StandardMaterial("salvage-point-material", scene);
+	pointC.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
+	*/
+});
+
 /*
 
 	player controls and button-mashing state
@@ -375,6 +394,10 @@ window.addEventListener('keyup', function(e) {
 		// fire straight ahead!
 		socket.emit('fired', { weaponType: 'test' });
 		blasterSound.play();
+		break;
+		case 81:
+		console.log('trying to salvage!');
+		socket.emit('salvage');
 		break;
 		default:
 		//console.log('key released: ' + e.keyCode);
