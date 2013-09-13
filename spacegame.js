@@ -263,7 +263,7 @@ socket.on('updateBullet', function(data) {
 		}
 	}
 	// must be a new bullet -- add it
-	console.log('new bullet fired!');
+	//console.log('new bullet fired!');
 	bullets.push( new Bullet( data.id, data.x, data.y, data.angle, scene ) );
 });
 
@@ -276,7 +276,7 @@ socket.on('removeBullet', function(data) {
 		}
 	}
 	if (data.didHit != false) {
-		console.log('player ' + data.didHit.playerName + ' was hit!');
+		//console.log('player ' + data.didHit.playerName + ' was hit!');
 		// explosion!
 		var explosionSprite = new BABYLON.Sprite('explosion', explosionSpriteManager);
 		explosionSprite.position = new BABYLON.Vector3(data.didHit.x, data.didHit.y, 0);
@@ -290,13 +290,13 @@ socket.on('removeBullet', function(data) {
 });
 
 socket.on('newSalvage', function(data) {
-	console.log('new salvage!');
-	console.log(data);
+	//console.log('new salvage!');
+	//console.log(data);
 	salvages.push( new Salvage( data.id, data.x, data.y, scene ) );
 });
 
 socket.on('removeSalvage', function(data) {
-	console.log('remove salvage #' + data.id);
+	//console.log('remove salvage #' + data.id);
 	for (var i = 0; i < salvages.length; i++) {
 		if (salvages[i].id == data.id) {
 			salvages[i].done = true;
