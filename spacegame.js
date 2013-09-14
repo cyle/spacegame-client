@@ -90,7 +90,7 @@ var playerShip = undefined;
 // the player's last known position and state
 var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0, direction: 0, state: 'normal' };
 
-// this will eventually hold the "area" the player is inhabiting...
+// this will eventually hold the "area" the player is inhabiting
 var area = {};
 
 // create an array to hold the bullet objects
@@ -99,7 +99,9 @@ var bullets = [];
 // create an array to hold the salvage-able objects
 var salvages = [];
 
+// these will hold the sprite managers
 var explosionSpriteManager = undefined;
+var bulletSpriteManager = undefined;
 
 /*
 
@@ -113,8 +115,9 @@ var players = [];
 // open up a socket to the server
 var socket = io.connect('http://'+socket_server_hostname+':31777', { 'reconnect': false }); // for now, don't bother reconnecting if the server goes down
 
-socket.emit('connected', playerName);
+socket.emit('connected', playerName); // let the server know we're connected
 
+// respond to a "welcome" event when the server has found us after first connecting
 socket.on('welcome', function(playerData) {
 	//playerName = name;
 	console.log('your player info retrieved from the database:');
@@ -122,33 +125,34 @@ socket.on('welcome', function(playerData) {
 	playerLast.x = playerData.x;
 	playerLast.y = playerData.y;
 	playerLast.angle = playerData.angle;
-	console.log('creating current players ship');
-	socket.emit('get-current-area');
+	socket.emit('get-current-area'); // get whatever current area we're in
 });
 
+// this function builds the area/zone we're in, dumping any old one we left
 function buildArea() {
 	
+	// disable the gameIsReady state
 	gameIsReady = false;
 	
 	console.log('building area...');
 	
 	// dump the other players
-	console.log('clearing players array');
+	//console.log('clearing players array');
 	players = [];
 	
 	// dump the current area, if there even is one yet
 	if (scene) {
-		console.log('disposing of current scene');
+		//console.log('disposing of current scene');
 		scene.dispose();
 	}
 	
 	// new scene
-	console.log('creating new scene');
+	//console.log('creating new scene');
 	scene = new BABYLON.Scene(engine);
 	
 	// the player camera will be constrained, allowing a top-down view of the player's ship
 	// arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
-	console.log('creating camera');
+	//console.log('creating camera');
 	camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 50, new BABYLON.Vector3(0, 0, 0), scene);
 	// constrain the camera
 	camera.lowerRadiusLimit = 10;
@@ -159,11 +163,11 @@ function buildArea() {
 	camera.upperBetaLimit = Math.PI * 0.66;
 
 	// attach the camera to the scene
-	console.log('attaching camera to scene');
+	//console.log('attaching camera to scene');
 	scene.activeCamera.attachControl(canvas);
 
 	// create a fill light so we can see things
-	console.log('creating light');
+	//console.log('creating light');
 	var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(45, -25, 30), scene);
 	//light.diffuse = new BABYLON.Color3(1, 1, 0);
 	light.diffuse = new BABYLON.Color3(1, 1, 1);
@@ -173,7 +177,7 @@ function buildArea() {
 	
 	// this flat plane acts as the "background" right now
 	// flat plane: name, size of plane, scene to add it to
-	console.log('creating background');
+	//console.log('creating background');
 	var plane = BABYLON.Mesh.CreatePlane("background-plane", area.width, scene);
 	plane.position = new BABYLON.Vector3(area.width/2, area.height/2, -8);
 	plane.rotation.y = -Math.PI;
@@ -184,7 +188,7 @@ function buildArea() {
 	
 	// just create random crap in the background
 	// so it's easier to tell when we're moving
-	console.log('creating random background crap');
+	//console.log('creating random background crap');
 	for (var i = 0; i < 200; i++) {
 		var newcrap = BABYLON.Mesh.CreateSphere("crap-"+i, 3, 0.5, scene);
 		newcrap.material = new BABYLON.StandardMaterial("crap-material", scene);
@@ -194,7 +198,7 @@ function buildArea() {
 		newcrap.position.z = -4;
 	}
 	
-	console.log('building the current area');
+	//console.log('building the current area');
 	for (var i = 0; i < area.stuff.length; i++) {
 		var thing = area.stuff[i];
 		if (thing.type == 'asteroid') {
@@ -231,13 +235,20 @@ function buildArea() {
 		}
 	}
 	
+	// initialize sprite managers to current scene
 	explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
+	bulletSpriteManager = new BABYLON.SpriteManager('bulletSprites', 'assets/blaster.png', 25, 10, scene);
 	
-	// create the player ship
+	// create the player ship in this scene
 	playerShip = new PlayerShip(playerLast.x, playerLast.y, playerLast.angle, scene);
 	
+	// register game loop
 	scene.registerBeforeRender(theGameLoop);
 	
+	// get the extra info about the area, i.e. other players, salvages, etc
+	socket.emit('get-current-area-extra');
+	
+	// ok -- game is ready now
 	gameIsReady = true;
 	
 }
@@ -256,6 +267,7 @@ socket.on('current-area-data', function(newArea) {
 });
 
 socket.on('otherPlayers', function(otherPlayers) {
+	console.log('receiving other players in area:');
 	console.log(otherPlayers);
 	for (var i = 0; i < otherPlayers.length; i++) {
 		if (otherPlayers[i].name == playerName) {
@@ -280,7 +292,7 @@ socket.on('updatePlayer', function(data) {
 });
 
 socket.on('removePlayer', function(name) {
-	//console.log('a player left: ' + name);
+	console.log('a player left: ' + name);
 	//console.log(data);
 	for (var i = 0; i < players.length; i++) {
 		if (players[i].name == name) {
@@ -299,7 +311,7 @@ socket.on('updateBullet', function(data) {
 	}
 	// must be a new bullet -- add it
 	//console.log('new bullet fired!');
-	bullets.push( new Bullet( data.id, data.x, data.y, data.angle, scene ) );
+	bullets.push( new Bullet( data.id, data.x, data.y, data.angle, scene, bulletSpriteManager ) );
 });
 
 socket.on('removeBullet', function(data) {
@@ -360,12 +372,13 @@ socket.on('salvaged', function(data) {
 
 socket.on('area-jump-result', function(data) {
 	// this happens when you try to jump...
-	console.log(data);
+	console.log('jump request succeeded...');
+	//console.log(data);
 	if (data.x != undefined) {
-		playerShip.x = data.x;
+		playerLast.x = playerShip.x = data.x;
 	}
 	if (data.y != undefined) {
-		playerShip.y = data.y;
+		playerLast.y = playerShip.y = data.y;
 	}
 	area = data.newArea;
 	buildArea();
@@ -472,7 +485,6 @@ window.addEventListener('keyup', function(e) {
 
 */
 
-var boxdir = true; // keep track of the little box's state
 var deltaTime = 0;
 
 // this is the pre-render update() loop

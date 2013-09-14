@@ -36,7 +36,7 @@ Salvage.prototype.dispose = function() {
 
 */
 
-function Bullet(id, x, y, angle, scene) {
+function Bullet(id, x, y, angle, scene, bulletSpriteManager) {
 	// meta info
 	this.id = id;
 	
@@ -47,8 +47,7 @@ function Bullet(id, x, y, angle, scene) {
 	this.angle = angle; // the angle it's travelling at
 	
 	// the bullet's sprite
-	this.bulletSpriteManager = new BABYLON.SpriteManager('bulletSprites', 'assets/blaster.png', 2, 10, scene);
-	this.bulletSprite = new BABYLON.Sprite('bullet', this.bulletSpriteManager);
+	this.bulletSprite = new BABYLON.Sprite('bullet', bulletSpriteManager);
 	this.bulletSprite.position = new BABYLON.Vector3(this.x, this.y, this.z);
 	this.bulletSprite.angle = this.angle * -1; // for some reason sprite angles are inverted
 }
@@ -63,7 +62,7 @@ Bullet.prototype.update = function(x, y, angle) {
 }
 
 Bullet.prototype.dispose = function() {
-	this.bulletSpriteManager.dispose(); // clear up resources
+	this.bulletSprite.dispose(); // clear up resources
 }
 
 

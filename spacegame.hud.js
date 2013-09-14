@@ -12,7 +12,7 @@ setInterval(function() {
 	hud_html += '<table>';
 	hud_html += '<tr>';
 	
-	hud_html += '<td>'+playerName+'</td>';
+	hud_html += '<td>'+playerName+' / '+area.name+'</td>';
 	hud_html += '<td>'+prettyNum(radiansToDegrees(playerShip.currentRotation), 2)+'&deg; / '+prettyNum(radiansToDegrees(playerShip.movingRotation), 2)+'&deg;</td>';
 	hud_html += '<td>'+prettyNum(playerShip.currentSpeed, 2)+' m/s</td>';
 	hud_html += '<td>0.0e / 10.0e</td>';
