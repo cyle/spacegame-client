@@ -31,51 +31,27 @@ function handleAudioLoad(event) {
 var canvas = document.getElementById("render");
 var engine = new BABYLON.Engine(canvas, true); // load the BABYLON engine
 var scene = new BABYLON.Scene(engine); // load the BABYLON scene, where all meshes will live
-
-// the player camera will be constrained, allowing a top-down view of the player's ship
-// arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
-var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 50, new BABYLON.Vector3(0, 0, 0), scene);
-// constrain the camera
-camera.lowerRadiusLimit = 10;
-camera.upperRadiusLimit = 75;
-camera.lowerAlphaLimit = Math.PI * 0.33;
-camera.upperAlphaLimit = Math.PI * 0.66;
-camera.lowerBetaLimit = Math.PI * 0.33;
-camera.upperBetaLimit = Math.PI * 0.66;
-
-// attach the camera to the scene
-scene.activeCamera.attachControl(canvas);
-
-// this will eventually hold the "area" the player is inhabiting...
-var area = {};
-
-// create a fill light so we can see things
-var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(45, -25, 30), scene);
-//light.diffuse = new BABYLON.Color3(1, 1, 0);
-light.diffuse = new BABYLON.Color3(1, 1, 1);
-//light.specular = new BABYLON.Color3(1, 1, 1);
-light.specular = new BABYLON.Color3(0, 0, 0);
-light.intensity = 0.575;
+var camera = undefined; // we will use this once we start building our area
 
 // set up an X/Y/Z axis for reference...
-var xBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
-xBox.position = new BABYLON.Vector3(6, 5, 2);
-xBox.material = new BABYLON.StandardMaterial("xBox-material", scene);
-xBox.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-var yBox = BABYLON.Mesh.CreateBox("yBox", 1.0, scene);
-yBox.position = new BABYLON.Vector3(5, 6, 2);
-yBox.material = new BABYLON.StandardMaterial("yBox-material", scene);
-yBox.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
-var zBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
-zBox.position = new BABYLON.Vector3(5, 5, 3);
-zBox.material = new BABYLON.StandardMaterial("zBox-material", scene);
-zBox.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
+// var xBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
+// xBox.position = new BABYLON.Vector3(6, 5, 2);
+// xBox.material = new BABYLON.StandardMaterial("xBox-material", scene);
+// xBox.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
+// var yBox = BABYLON.Mesh.CreateBox("yBox", 1.0, scene);
+// yBox.position = new BABYLON.Vector3(5, 6, 2);
+// yBox.material = new BABYLON.StandardMaterial("yBox-material", scene);
+// yBox.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
+// var zBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
+// zBox.position = new BABYLON.Vector3(5, 5, 3);
+// zBox.material = new BABYLON.StandardMaterial("zBox-material", scene);
+// zBox.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
 
-var ruler = BABYLON.Mesh.CreatePlane("ruler", 1, scene);
-ruler.position = new BABYLON.Vector3(2, 2, 0);
-ruler.rotation.y = -Math.PI;
-ruler.material = new BABYLON.StandardMaterial("ruler-material", scene);
-ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
+// var ruler = BABYLON.Mesh.CreatePlane("ruler", 1, scene);
+// ruler.position = new BABYLON.Vector3(2, 2, 0);
+// ruler.rotation.y = -Math.PI;
+// ruler.material = new BABYLON.StandardMaterial("ruler-material", scene);
+// ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
 
 // sphere: name, segments (detail), size, scene to add it to
 // var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
@@ -108,22 +84,28 @@ ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
 
 */
 
+// the player ship object (very important)
+var playerShip = undefined;
+
+// the player's last known position and state
+var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0, direction: 0, state: 'normal' };
+
+// this will eventually hold the "area" the player is inhabiting...
+var area = {};
+
 // create an array to hold the bullet objects
 var bullets = [];
 
 // create an array to hold the salvage-able objects
 var salvages = [];
 
+var explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
+
 /*
 
 	load multiplayer stuff
 
 */
-
-// this player's name
-//var playerName = ''; // set earlier...
-var playerShip = undefined;
-var playerLast = { x: 0.0, y: 0.0, z: 0.0, angle: 0.0, direction: 0, state: 'normal' };
 
 // create the list of other players
 var players = [];
@@ -140,28 +122,60 @@ socket.on('welcome', function(playerData) {
 	playerLast.x = playerData.x;
 	playerLast.y = playerData.y;
 	playerLast.angle = playerData.angle;
+	console.log('creating current players ship');
 	// create the player ship
 	playerShip = new PlayerShip(playerLast.x, playerLast.y, playerLast.angle, scene);
-	//socket.emit('get-area', playerData.area);
 	socket.emit('get-current-area');
 });
 
-socket.on('area-data', function(newArea) {
-	console.log(newArea);
-});
+function buildArea() {
+	
+	console.log('building area...');
+	
+	// dump the other players
+	//console.log('clearing players array');
+	//players = [];
+	
+	// dump the current area, if there even is one yet
+	// if (scene) {
+	// 	console.log('disposing of current scene');
+	// 	scene.dispose();
+	// }
+	
+	// new scene
+	// console.log('creating new scene');
+	// scene = new BABYLON.Scene(engine);
+	
+	// the player camera will be constrained, allowing a top-down view of the player's ship
+	// arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
+	console.log('creating camera');
+	camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 50, new BABYLON.Vector3(0, 0, 0), scene);
+	// constrain the camera
+	camera.lowerRadiusLimit = 10;
+	camera.upperRadiusLimit = 75;
+	camera.lowerAlphaLimit = Math.PI * 0.33;
+	camera.upperAlphaLimit = Math.PI * 0.66;
+	camera.lowerBetaLimit = Math.PI * 0.33;
+	camera.upperBetaLimit = Math.PI * 0.66;
 
-socket.on('current-area-data', function(newArea) {
-	// take incoming area data
-	
-	//console.log('getting current area...');
-	//console.log(newArea);
-	
-	area = newArea;
+	// attach the camera to the scene
+	console.log('attaching camera to scene');
+	scene.activeCamera.attachControl(canvas);
+
+	// create a fill light so we can see things
+	console.log('creating light');
+	var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(45, -25, 30), scene);
+	//light.diffuse = new BABYLON.Color3(1, 1, 0);
+	light.diffuse = new BABYLON.Color3(1, 1, 1);
+	//light.specular = new BABYLON.Color3(1, 1, 1);
+	light.specular = new BABYLON.Color3(0, 0, 0);
+	light.intensity = 0.575;
 	
 	// this flat plane acts as the "background" right now
 	// flat plane: name, size of plane, scene to add it to
-	var plane = BABYLON.Mesh.CreatePlane("background-plane", newArea.width, scene);
-	plane.position = new BABYLON.Vector3(newArea.width/2, newArea.height/2, -8);
+	console.log('creating background');
+	var plane = BABYLON.Mesh.CreatePlane("background-plane", area.width, scene);
+	plane.position = new BABYLON.Vector3(area.width/2, area.height/2, -8);
 	plane.rotation.y = -Math.PI;
 	plane.material = new BABYLON.StandardMaterial("bg-material", scene);
 	plane.material.diffuseTexture = new BABYLON.Texture("assets/bg/stars.jpg", scene);
@@ -170,17 +184,19 @@ socket.on('current-area-data', function(newArea) {
 	
 	// just create random crap in the background
 	// so it's easier to tell when we're moving
+	console.log('creating random background crap');
 	for (var i = 0; i < 200; i++) {
 		var newcrap = BABYLON.Mesh.CreateSphere("crap-"+i, 3, 0.5, scene);
 		newcrap.material = new BABYLON.StandardMaterial("crap-material", scene);
 		newcrap.material.emissiveColor = new BABYLON.Color4(1, 1, 1, 1);
-		newcrap.position.x = randomFromInterval(0, newArea.width);
-		newcrap.position.y = randomFromInterval(0, newArea.height);
+		newcrap.position.x = randomFromInterval(0, area.width);
+		newcrap.position.y = randomFromInterval(0, area.height);
 		newcrap.position.z = -4;
 	}
 	
-	for (var i = 0; i < newArea.stuff.length; i++) {
-		var thing = newArea.stuff[i];
+	console.log('building the current area');
+	for (var i = 0; i < area.stuff.length; i++) {
+		var thing = area.stuff[i];
 		if (thing.type == 'asteroid') {
 			var asteroid = undefined; // we will be defining it in a second...
 			if (thing.model.type == 'sphere') {
@@ -215,8 +231,19 @@ socket.on('current-area-data', function(newArea) {
 		}
 	}
 	
-	//console.log('area built, game ready!');
-	
+}
+
+socket.on('area-data', function(newArea) {
+	console.log(newArea);
+});
+
+socket.on('current-area-data', function(newArea) {
+	// take incoming area data
+	console.log('getting current area...');
+	//console.log(newArea);
+	area = newArea;
+	buildArea();
+	console.log('current area built, game ready!');
 	gameIsReady = true;
 });
 
@@ -323,6 +350,28 @@ socket.on('salvaged', function(data) {
 	*/
 });
 
+socket.on('area-jump-result', function(data) {
+	// this happens when you try to jump...
+	console.log(data);
+	if (data.x != undefined) {
+		playerShip.x = data.x;
+	}
+	if (data.y != undefined) {
+		playerShip.y = data.y;
+	}
+	area = data.newArea;
+	buildArea();
+});
+
+socket.on('update-position', function(data) {
+	if (data.x != undefined) {
+		playerShip.x = data.x;
+	}
+	if (data.y != undefined) {
+		playerShip.y = data.y;
+	}
+});
+
 /*
 
 	player controls and button-mashing state
@@ -395,9 +444,14 @@ window.addEventListener('keyup', function(e) {
 		socket.emit('fired', { weaponType: 'test' });
 		blasterSound.play();
 		break;
-		case 81:
+		case 81: // q
 		console.log('trying to salvage!');
 		socket.emit('salvage');
+		break;
+		case 74: // j
+		console.log('trying to subspace jump!');
+		var jump_to_area_name = prompt('Jump to where?');
+		socket.emit('area-jump', { name: jump_to_area_name });
 		break;
 		default:
 		//console.log('key released: ' + e.keyCode);
@@ -409,8 +463,6 @@ window.addEventListener('keyup', function(e) {
 	the pre-render update loop
 
 */
-
-var explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
 
 var boxdir = true; // keep track of the little box's state
 var deltaTime = 0;
