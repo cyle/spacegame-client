@@ -30,7 +30,7 @@ function handleAudioLoad(event) {
 // the canvas element is where the magic happens
 var canvas = document.getElementById("render");
 var engine = new BABYLON.Engine(canvas, true); // load the BABYLON engine
-var scene = new BABYLON.Scene(engine); // load the BABYLON scene, where all meshes will live
+var scene = undefined; // load the BABYLON scene, where all meshes will live
 var camera = undefined; // we will use this once we start building our area
 
 // set up an X/Y/Z axis for reference...
@@ -99,7 +99,7 @@ var bullets = [];
 // create an array to hold the salvage-able objects
 var salvages = [];
 
-var explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
+var explosionSpriteManager = undefined;
 
 /*
 
@@ -123,28 +123,28 @@ socket.on('welcome', function(playerData) {
 	playerLast.y = playerData.y;
 	playerLast.angle = playerData.angle;
 	console.log('creating current players ship');
-	// create the player ship
-	playerShip = new PlayerShip(playerLast.x, playerLast.y, playerLast.angle, scene);
 	socket.emit('get-current-area');
 });
 
 function buildArea() {
 	
+	gameIsReady = false;
+	
 	console.log('building area...');
 	
 	// dump the other players
-	//console.log('clearing players array');
-	//players = [];
+	console.log('clearing players array');
+	players = [];
 	
 	// dump the current area, if there even is one yet
-	// if (scene) {
-	// 	console.log('disposing of current scene');
-	// 	scene.dispose();
-	// }
+	if (scene) {
+		console.log('disposing of current scene');
+		scene.dispose();
+	}
 	
 	// new scene
-	// console.log('creating new scene');
-	// scene = new BABYLON.Scene(engine);
+	console.log('creating new scene');
+	scene = new BABYLON.Scene(engine);
 	
 	// the player camera will be constrained, allowing a top-down view of the player's ship
 	// arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
@@ -231,6 +231,15 @@ function buildArea() {
 		}
 	}
 	
+	explosionSpriteManager = new BABYLON.SpriteManager('testSprites', 'assets/explosion.png', 10, 200, scene);
+	
+	// create the player ship
+	playerShip = new PlayerShip(playerLast.x, playerLast.y, playerLast.angle, scene);
+	
+	scene.registerBeforeRender(theGameLoop);
+	
+	gameIsReady = true;
+	
 }
 
 socket.on('area-data', function(newArea) {
@@ -244,7 +253,6 @@ socket.on('current-area-data', function(newArea) {
 	area = newArea;
 	buildArea();
 	console.log('current area built, game ready!');
-	gameIsReady = true;
 });
 
 socket.on('otherPlayers', function(otherPlayers) {
@@ -468,7 +476,7 @@ var boxdir = true; // keep track of the little box's state
 var deltaTime = 0;
 
 // this is the pre-render update() loop
-scene.registerBeforeRender(function () {
+function theGameLoop() {
 	
 	if (!gameIsReady) { return; }
 	
@@ -578,7 +586,7 @@ scene.registerBeforeRender(function () {
 		playerLast.state = playerShip.playerState;
 	}
 		
-});
+}
 
 /*
 
