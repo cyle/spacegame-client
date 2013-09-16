@@ -422,6 +422,7 @@ PlayerShip.prototype.safeZoned = function() {
 		if (this.objects[i].hasOwnProperty('ignoreColoring') && this.objects[i].ignoreColoring == true) { continue; }
 		this.objects[i].material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
 	}
+	this.playerState = 'safezoned';
 }
 
 PlayerShip.prototype.invisible = function() {
