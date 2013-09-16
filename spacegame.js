@@ -1,15 +1,82 @@
-// get where the socket.io server is
-var socket_server_hostname = prompt('What\'s the hostname or IP of the server?', 'localhost');
-while (socket_server_hostname == undefined || socket_server_hostname == '') {
-	alert('You really need to connect to a server.');
-	socket_server_hostname = prompt('What\'s the hostname or IP of the server?', 'localhost');
-}
-// ask for the player's name
-var playerName = prompt('Your name?');
-while (playerName == undefined || playerName == '') {
-	alert('You really need to have a name.');
-	playerName = prompt('Your name?');
-}
+
+// the gameIsReady variable is defined earlier than this file...
+
+var playerName = undefined; // none set yet
+var socket = undefined; // this will hold the socket.io connection
+
+document.getElementById('login-server').focus();
+
+var login_btn = document.getElementById('game-start-btn');
+login_btn.addEventListener('click', function() {
+	// on login, check for server hostname and username
+	var login_server = document.getElementById('login-server').value;
+	var login_username = document.getElementById('login-username').value;
+	
+	if (login_server == undefined || login_server == '') {
+		alert('You really need to connect to a server.');
+		document.getElementById('login-server').focus();
+		return;
+	}
+	
+	if (login_username == undefined || login_username == '') {
+		alert('You really need to have a name.');
+		document.getElementById('login-username').focus();
+		return;
+	}
+	
+	// remove the login screen, it's no longer needed
+	document.getElementById('login').parentNode.removeChild(document.getElementById('login'));
+	
+	playerName = login_username;
+	
+	// connect to socket.io based game server
+	socket = io.connect('http://'+login_server+':31777', { 'reconnect': false }); // for now, don't bother reconnecting if the server goes down
+	
+	// ok, now line up all of the socket responders
+	
+	// respond to event when the server has found us after first connecting
+	socket.on('welcome', welcome);
+	
+	// respond to event when the server has sent along area data you've asked for
+	socket.on('area-data', areaData);
+	
+	// respond to event when the server has sent along the area data for where you currently are
+	socket.on('current-area-data', currentAreaData);
+	
+	// respond to event when the server has sent along what other players are in your zone/area
+	socket.on('otherPlayers', otherPlayers);
+	
+	// update other players' positions and whatnot based on the server -- or create them if they don't exist on this client yet
+	socket.on('updatePlayer', updatePlayer);
+	
+	// remove another player
+	socket.on('removePlayer', removePlayer);
+	
+	// update a bullet's position based on the server -- or create one if it doesn't exist yet
+	socket.on('updateBullet', updateBullet);
+	
+	// remove a bullet, and show explosion/damage if needed
+	socket.on('removeBullet', removeBullet);
+	
+	// create new salvage-able object somewhere in the zone
+	socket.on('newSalvage', newSalvage);
+
+	// remove salvage-able object from the zone
+	socket.on('removeSalvage', removeSalvage);
+
+	// respond to when the server tells us we've successfully salvaged an object
+	socket.on('salvaged', salvaged);
+	
+	// repond to when the server tells us we've successfully initiated a subspace jump
+	socket.on('area-jump-result', areaJumpResult);
+	
+	// update your position if the server tells you to
+	socket.on('update-position', updatePosition);
+	
+	// let the server know you're connected and loaded up
+	socket.emit('connected', playerName); 
+	
+});
 
 // sounds
 var canPlaySounds = false;
@@ -32,51 +99,6 @@ var canvas = document.getElementById("render");
 var engine = new BABYLON.Engine(canvas, true); // load the BABYLON engine
 var scene = undefined; // load the BABYLON scene, where all meshes will live
 var camera = undefined; // we will use this once we start building our area
-
-// set up an X/Y/Z axis for reference...
-// var xBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
-// xBox.position = new BABYLON.Vector3(6, 5, 2);
-// xBox.material = new BABYLON.StandardMaterial("xBox-material", scene);
-// xBox.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-// var yBox = BABYLON.Mesh.CreateBox("yBox", 1.0, scene);
-// yBox.position = new BABYLON.Vector3(5, 6, 2);
-// yBox.material = new BABYLON.StandardMaterial("yBox-material", scene);
-// yBox.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
-// var zBox = BABYLON.Mesh.CreateBox("zBox", 1.0, scene);
-// zBox.position = new BABYLON.Vector3(5, 5, 3);
-// zBox.material = new BABYLON.StandardMaterial("zBox-material", scene);
-// zBox.material.emissiveColor = new BABYLON.Color4(0, 0, 1, 1);
-
-// var ruler = BABYLON.Mesh.CreatePlane("ruler", 1, scene);
-// ruler.position = new BABYLON.Vector3(2, 2, 0);
-// ruler.rotation.y = -Math.PI;
-// ruler.material = new BABYLON.StandardMaterial("ruler-material", scene);
-// ruler.material.diffuseTexture = new BABYLON.Texture("assets/ruler.png", scene);
-
-// sphere: name, segments (detail), size, scene to add it to
-// var sphere = BABYLON.Mesh.CreateSphere("Sphere", 9.0, 3.0, scene);
-// sphere.position = new BABYLON.Vector3(15,0,0);
-// sphere.collideWith = true;
-// sphere.material = new BABYLON.StandardMaterial("texture", scene);
-// sphere.material.wireframe = true;
-
-// cylinder: name, height, diameter, segments (detail), scene to add it to, whether it's updatable
-// var cylinder = BABYLON.Mesh.CreateCylinder("cylinder", 2, 2, 20, scene, false);
-// cylinder.position = new BABYLON.Vector3(15,5,0);
-
-// torus: name, diameter, thickness, segments (detail), scene to add it to, whether it's updatable
-// var torus = BABYLON.Mesh.CreateTorus("torus", 5, 1, 20, scene, false);
-// torus.position = new BABYLON.Vector3(15,10,0);
-
-// import this spaceship mesh -- not sure what to do with it yet, but wanted to test importing
-// BABYLON.SceneLoader.ImportMesh("", "models/Spaceship/", "Spaceship.babylon", scene, function (newMeshes, particleSystems) {
-// 	//console.log(newMeshes);
-// 	for (var i = 0; i < newMeshes.length; i++) {
-// 		newMeshes[i].scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
-// 		newMeshes[i].position = new BABYLON.Vector3(0, 10, 0);
-// 		newMeshes[i].rotation = new BABYLON.Vector3(Math.PI/4, 0, 0);
-// 	}
-// });
 
 /*
 
@@ -111,22 +133,6 @@ var bulletSpriteManager = undefined;
 
 // create the list of other players
 var players = [];
-
-// open up a socket to the server
-var socket = io.connect('http://'+socket_server_hostname+':31777', { 'reconnect': false }); // for now, don't bother reconnecting if the server goes down
-
-socket.emit('connected', playerName); // let the server know we're connected
-
-// respond to a "welcome" event when the server has found us after first connecting
-socket.on('welcome', function(playerData) {
-	//playerName = name;
-	console.log('your player info retrieved from the database:');
-	console.log(playerData);
-	playerLast.x = playerData.x;
-	playerLast.y = playerData.y;
-	playerLast.angle = playerData.angle;
-	socket.emit('get-current-area'); // get whatever current area we're in
-});
 
 // this function builds the area/zone we're in, dumping any old one we left
 function buildArea() {
@@ -253,20 +259,29 @@ function buildArea() {
 	
 }
 
-socket.on('area-data', function(newArea) {
-	console.log(newArea);
-});
+function welcome(playerData) {
+	console.log('your player info retrieved from the database:');
+	console.log(playerData);
+	playerLast.x = playerData.x;
+	playerLast.y = playerData.y;
+	playerLast.angle = playerData.angle;
+	socket.emit('get-current-area'); // get whatever current area we're in
+}
 
-socket.on('current-area-data', function(newArea) {
+function areaData(newArea) {
+	console.log(newArea);
+}
+
+function currentAreaData(newArea) {
 	// take incoming area data
 	console.log('getting current area...');
 	//console.log(newArea);
 	area = newArea;
 	buildArea();
 	console.log('current area built, game ready!');
-});
+}
 
-socket.on('otherPlayers', function(otherPlayers) {
+function otherPlayers(otherPlayers) {
 	console.log('receiving other players in area:');
 	console.log(otherPlayers);
 	for (var i = 0; i < otherPlayers.length; i++) {
@@ -275,9 +290,9 @@ socket.on('otherPlayers', function(otherPlayers) {
 		}
 		players.push( new OtherShip(otherPlayers[i].name, otherPlayers[i].x, otherPlayers[i].y, otherPlayers[i].angle, scene) );
 	}
-});
+}
 
-socket.on('updatePlayer', function(data) {
+function updatePlayer(data) {
 	// update when another player moves
 	//console.log('player ' + data.name + ' moved!');
 	for (var i = 0; i < players.length; i++) {
@@ -289,9 +304,9 @@ socket.on('updatePlayer', function(data) {
 	// must be a new player -- add them
 	console.log('a new player arrived: ' + data.name);
 	players.push( new OtherShip(data.name, data.x, data.y, data.angle, scene) );
-});
+}
 
-socket.on('removePlayer', function(name) {
+function removePlayer(name) {
 	console.log('a player left: ' + name);
 	//console.log(data);
 	for (var i = 0; i < players.length; i++) {
@@ -299,9 +314,9 @@ socket.on('removePlayer', function(name) {
 			players[i].done = true;
 		}
 	}
-});
+}
 
-socket.on('updateBullet', function(data) {
+function updateBullet(data) {
 	// update bullet from server
 	for (var i = 0; i < bullets.length; i++) {
 		if (bullets[i].id == data.id) {
@@ -312,9 +327,9 @@ socket.on('updateBullet', function(data) {
 	// must be a new bullet -- add it
 	//console.log('new bullet fired!');
 	bullets.push( new Bullet( data.id, data.x, data.y, data.angle, scene, bulletSpriteManager ) );
-});
+}
 
-socket.on('removeBullet', function(data) {
+function removeBullet(data) {
 	// remove bullet
 	// explode it?
 	for (var i = 0; i < bullets.length; i++) {
@@ -334,43 +349,29 @@ socket.on('removeBullet', function(data) {
 			playerShip.damage( data.didHit.damage );
 		}
 	}
-});
+}
 
-socket.on('newSalvage', function(data) {
+function newSalvage(data) {
 	//console.log('new salvage!');
 	//console.log(data);
 	salvages.push( new Salvage( data.id, data.x, data.y, scene ) );
-});
+}
 
-socket.on('removeSalvage', function(data) {
+function removeSalvage(data) {
 	//console.log('remove salvage #' + data.id);
 	for (var i = 0; i < salvages.length; i++) {
 		if (salvages[i].id == data.id) {
 			salvages[i].done = true;
 		}
 	}
-});
+}
 
-socket.on('salvaged', function(data) {
+function salvaged(data) {
 	console.log('salvaged!');
 	console.log(data);
-	/*
-	var pointA = new BABYLON.Mesh.CreateSphere("point A", 3.0, 1.0, scene);
-	pointA.position = new BABYLON.Vector3(data.a.x, data.a.y, 0);
-	pointA.material = new BABYLON.StandardMaterial("salvage-point-material", scene);
-	pointA.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-	var pointB = new BABYLON.Mesh.CreateSphere("point B", 3.0, 1.0, scene);
-	pointB.position = new BABYLON.Vector3(data.b.x, data.b.y, 0);
-	pointB.material = new BABYLON.StandardMaterial("salvage-point-material", scene);
-	pointB.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-	var pointC = new BABYLON.Mesh.CreateSphere("point C", 3.0, 1.0, scene);
-	pointC.position = new BABYLON.Vector3(data.c.x, data.c.y, 0);
-	pointC.material = new BABYLON.StandardMaterial("salvage-point-material", scene);
-	pointC.material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-	*/
-});
+}
 
-socket.on('area-jump-result', function(data) {
+function areaJumpResult(data) {
 	// this happens when you try to jump...
 	console.log('jump request succeeded...');
 	//console.log(data);
@@ -382,16 +383,16 @@ socket.on('area-jump-result', function(data) {
 	}
 	area = data.newArea;
 	buildArea();
-});
+}
 
-socket.on('update-position', function(data) {
+function updatePosition(data) {
 	if (data.x != undefined) {
 		playerShip.x = data.x;
 	}
 	if (data.y != undefined) {
 		playerShip.y = data.y;
 	}
-});
+}
 
 /*
 
