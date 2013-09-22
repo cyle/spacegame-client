@@ -235,6 +235,18 @@ function buildArea() {
 			safezone.material = new BABYLON.StandardMaterial("safezone-texture", scene);
 			safezone.material.emissiveColor = new BABYLON.Color4(0, 1, 0, 1);
 			safezone.material.wireframe = true;
+		} else if (thing.type == 'space-station') {
+			if (thing.model.type == 'sphere') {
+				var spacestation = BABYLON.Mesh.CreateSphere("spacestation-"+i, thing.model.seg, thing.model.size, scene);
+				spacestation.material = new BABYLON.StandardMaterial("spacestation-material", scene);
+				spacestation.material.emissiveColor = new BABYLON.Color4(thing.model.color.r, thing.model.color.g, thing.model.color.b, thing.model.color.a);
+				spacestation.material.wireframe = true;
+			} else if (thing.model.type == 'file') {
+				// eventually handle it as a model file here...
+			}
+			spacestation.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			spacestation.collideWith = true;
+			spacestation.solid = true;
 		} else {
 			console.log('unknown object in area: ');
 			console.log(thing);
