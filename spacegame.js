@@ -222,6 +222,7 @@ function buildArea() {
 		} else if (thing.type == 'nebula') {
 			var nebula = BABYLON.Mesh.CreateRect("nebula-"+i, thing.width, thing.height, thing.depth, scene);
 			nebula.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			nebula.rotation.z = thing.r;
 			nebula.collideWith = true;
 			nebula.nebula = true;
 			nebula.material = new BABYLON.StandardMaterial("nebula-texture", scene);
@@ -230,6 +231,7 @@ function buildArea() {
 		} else if (thing.type == 'safezone') {
 			var safezone = BABYLON.Mesh.CreateRect("safezone-"+i, thing.width, thing.height, thing.depth, scene);
 			safezone.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			safezone.rotation.z = thing.r;
 			safezone.collideWith = true;
 			safezone.safeZone = true;
 			safezone.material = new BABYLON.StandardMaterial("safezone-texture", scene);
