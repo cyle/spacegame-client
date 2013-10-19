@@ -39,6 +39,10 @@ Controls:
 
 You can move around the camera a little by holding the left mouse button and dragging around, or using the arrow keys.
 
+## Usage
+
+To get it fully up and running, follow [this guide](USAGE.md).
+
 ## About
 
 The general idea I had for my SPACE GAME! was to re-create [Cosmic Rift](http://en.wikipedia.org/wiki/Cosmic_Rift), specifically the "Rogue Trader" zone, where you had a ship (which you could upgrade) and fly around collecting tradable materials and/or shoot the other ships in the zone. With enough money and time, you could even build a little starbase, though they never lasted long. It was a hell of a lot of fun, and I miss it, and I'm surprised nobody has made anything like it since then. At least, the attempts I've seen are usually too complicated and not fun enough.
