@@ -8,9 +8,13 @@ Note that this will not work on a computer that does not have hardware graphics 
 
 ## Important Note
 
-After version 0.0.2, this now requires the **SPACE GAME! server** in order to play. Even if you are playing alone, you need to load that up first. Also note that right now this requires you to have the server running on the same machine you're playing with... so yeah. You'll be playing alone anyway.
+After version 0.0.2, this now requires the [**SPACE GAME! server**](https://github.com/cyle/spacegame-server) in order to play. Even if you are playing alone, you need to load that up first. Also note that right now this requires you to have the server running on the same machine you're playing with... so yeah. You'll be playing alone anyway.
 
 Also, this is super alpha, and unstable, and I'm working on it sporadically. Don't be surprised if the documentation is wrong. I'll try to keep this updated as often as I can.
+
+## A SCREENSHOT, WHOA
+
+![a SPACE GAME screenshot](https://raw.github.com/cyle/spacegame-client/master/spacegame-alpha-screenshot.jpg "a SPACE GAME screenshot")
 
 ## Current Features
 
