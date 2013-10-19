@@ -4,11 +4,13 @@ Just load index.html into Chrome (or any browser that supports WebGL) and play!
 
 You will need two things: the server hostname/IP and your name. If you are a returning player, use the same name! If not, enter whatever name you want.
 
-Note that this will not work on a computer that does not have hardware graphics acceleration for WebGL. The only tested browser is **Chrome**.
+Note that this will not work on a computer that does not have hardware graphics acceleration for WebGL. The only thoroughly tested browsers are Chrome and Safari.
 
 ## Important Note
 
-After version 0.0.2, this now requires the SPACE GAME! server in order to play. Even if you are playing alone, you need to load that up first. Also note that right now this requires you to have the server running on the same machine you're playing with... so yeah. You'll be playing alone anyway.
+After version 0.0.2, this now requires the **SPACE GAME! server** in order to play. Even if you are playing alone, you need to load that up first. Also note that right now this requires you to have the server running on the same machine you're playing with... so yeah. You'll be playing alone anyway.
+
+Also, this is super alpha, and unstable, and I'm working on it sporadically. Don't be surprised if the documentation is wrong. I'll try to keep this updated as often as I can.
 
 ## Current Features
 
@@ -16,8 +18,8 @@ After version 0.0.2, this now requires the SPACE GAME! server in order to play. 
 - You can run into asteroids (little brown spheres) and bounce away from them upon collision.
 - You can hide in nebulae (purple boxes).
 - You can park safely inside safe zones (green boxes).
-- You can shoot straight ahead (though the bullets don't actually do anything yet).
-- You can see other people zooming around where you are.
+- You can shoot straight ahead (though the bullets don't actually do much yet).
+- You can see other people zooming around where you are if you're sharing a server.
 
 ## Controls
 
@@ -39,13 +41,15 @@ The general idea I had for my SPACE GAME! was to re-create [Cosmic Rift](http://
 
 I'd like to re-create that experience and then expand on it by having more than one "area" to fly around. Instead, I'd like to have a whole galaxy of areas you can travel to, and an elaborate system of space-faring empires you can interact with. Join up with a civilization and get some bonuses (but make enemies with rival civs), or work on your own in the unclaimed systems.
 
+You can read my intentions (or dreams) about the game [here](http://cylesoft.com/blog/space-game-design-doc.html).
+
 This uses the [Babylon.js](http://www.babylonjs.com/) game engine thing, which is pretty damn neat.
 
 ## Planned Features / To-do list
 
 - Bullets actually do damage of some kind.
 - Space stations.
-- Proper textures / models.
+- Proper textures / models actually working...
 - Mine-able/pick-up-able objects and trading.
 - Different ships, weapons, engines, etc.
 - Travel to other areas after purchasing a hyperdrive.
