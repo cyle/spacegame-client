@@ -272,14 +272,68 @@
         light.specular = BABYLON.Color3.FromArray(parsedLight.specular);
     };
 
-    var parseMesh = function (parsedMesh, scene) {
+    var parseCamera = function (parsedCamera, scene) {
+        var camera = new BABYLON.FreeCamera(parsedCamera.name, BABYLON.Vector3.FromArray(parsedCamera.position), scene);
+        camera.id = parsedCamera.id;
+
+        // Parent
+        if (parsedCamera.parentId) {
+            camera._waitingParentId = parsedCamera.parentId;
+        }
+
+        // Target
+        if (parsedCamera.target) {
+            camera.setTarget(BABYLON.Vector3.FromArray(parsedCamera.target));
+        } else {
+            camera.rotation = BABYLON.Vector3.FromArray(parsedCamera.rotation);
+        }
+        
+        // Locked target
+        if (parsedCamera.lockedTargetId) {
+            camera._waitingLockedTargetId = parsedCamera.lockedTargetId;
+        }
+
+        camera.fov = parsedCamera.fov;
+        camera.minZ = parsedCamera.minZ;
+        camera.maxZ = parsedCamera.maxZ;
+
+        camera.speed = parsedCamera.speed;
+        camera.inertia = parsedCamera.inertia;
+
+        camera.checkCollisions = parsedCamera.checkCollisions;
+        camera.applyGravity = parsedCamera.applyGravity;
+        if (parsedCamera.ellipsoid) {
+            camera.ellipsoid = BABYLON.Vector3.FromArray(parsedCamera.ellipsoid);
+        }
+
+        // Animations
+        if (parsedCamera.animations) {
+            for (var animationIndex = 0; animationIndex < parsedCamera.animations.length; animationIndex++) {
+                var parsedAnimation = parsedCamera.animations[animationIndex];
+
+                camera.animations.push(parseAnimation(parsedAnimation));
+            }
+        }
+
+        if (parsedCamera.autoAnimate) {
+            scene.beginAnimation(camera, parsedCamera.autoAnimateFrom, parsedCamera.autoAnimateTo, parsedCamera.autoAnimateLoop, 1.0);
+        }
+
+        return camera;
+    };
+
+    var parseMesh = function (parsedMesh, scene, rootUrl) {
         var mesh = new BABYLON.Mesh(parsedMesh.name, scene);
         mesh.id = parsedMesh.id;
 
         mesh.position = BABYLON.Vector3.FromArray(parsedMesh.position);
-        mesh.rotation = (parsedMesh.rotation.length == 3) ? BABYLON.Vector3.FromArray(parsedMesh.rotation) : BABYLON.Quaternion.FromArray(parsedMesh.rotation);
+        if (parsedMesh.rotation) {
+            mesh.rotation = BABYLON.Vector3.FromArray(parsedMesh.rotation);
+        } else if (parsedMesh.rotationQuaternion) {
+            mesh.rotationQuaternion = BABYLON.Quaternion.FromArray(parsedMesh.rotationQuaternion);
+        }
         mesh.scaling = BABYLON.Vector3.FromArray(parsedMesh.scaling);
-        
+
         if (parsedMesh.localMatrix) {
             mesh.setPivotMatrix(BABYLON.Matrix.FromArray(parsedMesh.localMatrix));
         }
@@ -297,47 +351,39 @@
 
         mesh.checkCollisions = parsedMesh.checkCollisions;
 
-        if (parsedMesh.positions && parsedMesh.normals && parsedMesh.indices) {
-            mesh.setVerticesData(parsedMesh.positions, BABYLON.VertexBuffer.PositionKind, false);
-            mesh.setVerticesData(parsedMesh.normals, BABYLON.VertexBuffer.NormalKind, false);
+        if (parsedMesh.delayLoadingFile) {
+            mesh.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NOTLOADED;
+            mesh.delayLoadingFile = rootUrl + parsedMesh.delayLoadingFile;
+            mesh._boundingInfo = new BABYLON.BoundingInfo(BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMinimum), BABYLON.Vector3.FromArray(parsedMesh.boundingBoxMaximum));
 
-            if (parsedMesh.uvs) {
-                mesh.setVerticesData(parsedMesh.uvs, BABYLON.VertexBuffer.UVKind, false);
+            mesh._delayInfo = [];
+            if (parsedMesh.hasUVs) {
+                mesh._delayInfo.push(BABYLON.VertexBuffer.UVKind);
             }
 
-            if (parsedMesh.uvs2) {
-                mesh.setVerticesData(parsedMesh.uvs2, BABYLON.VertexBuffer.UV2Kind, false);
+            if (parsedMesh.hasUVs2) {
+                mesh._delayInfo.push(BABYLON.VertexBuffer.UV2Kind);
             }
 
-            if (parsedMesh.colors) {
-                mesh.setVerticesData(parsedMesh.colors, BABYLON.VertexBuffer.ColorKind, false);
+            if (parsedMesh.hasColors) {
+                mesh._delayInfo.push(BABYLON.VertexBuffer.ColorKind);
             }
 
-            if (parsedMesh.matricesIndices) {
-                var floatIndices = [];
-
-                for (var i = 0; i < parsedMesh.matricesIndices.length; i++) {
-                    var matricesIndex = parsedMesh.matricesIndices[i];
-
-                    floatIndices.push(matricesIndex & 0x000000FF);
-                    floatIndices.push((matricesIndex & 0x0000FF00) >> 8);
-                    floatIndices.push((matricesIndex & 0x00FF0000) >> 16);
-                    floatIndices.push(matricesIndex >> 24);
-                }
-
-                mesh.setVerticesData(floatIndices, BABYLON.VertexBuffer.MatricesIndicesKind, false);
+            if (parsedMesh.hasMatricesIndices) {
+                mesh._delayInfo.push(BABYLON.VertexBuffer.MatricesIndicesKind);
             }
 
-            if (parsedMesh.matricesWeights) {
-                mesh.setVerticesData(parsedMesh.matricesWeights, BABYLON.VertexBuffer.MatricesWeightsKind, false);
+            if (parsedMesh.hasMatricesWeights) {
+                mesh._delayInfo.push(BABYLON.VertexBuffer.MatricesWeightsKind);
             }
 
-            mesh.setIndices(parsedMesh.indices);
+        } else {
+            BABYLON.SceneLoader._ImportGeometry(parsedMesh, mesh);
         }
 
         // Parent
         if (parsedMesh.parentId) {
-            mesh.parent = scene.getLastMeshByID(parsedMesh.parentId);
+            mesh.parent = scene.getLastEntryByID(parsedMesh.parentId);
         }
 
         // Material
@@ -350,16 +396,6 @@
         // Skeleton
         if (parsedMesh.skeletonId > -1) {
             mesh.skeleton = scene.getLastSkeletonByID(parsedMesh.skeletonId);
-        }
-
-        // SubMeshes
-        if (parsedMesh.subMeshes) {
-            mesh.subMeshes = [];
-            for (var subIndex = 0; subIndex < parsedMesh.subMeshes.length; subIndex++) {
-                var parsedSubMesh = parsedMesh.subMeshes[subIndex];
-
-                var subMesh = new BABYLON.SubMesh(parsedSubMesh.materialIndex, parsedSubMesh.verticesStart, parsedSubMesh.verticesCount, parsedSubMesh.indexStart, parsedSubMesh.indexCount, mesh);
-            }
         }
 
         // Animations
@@ -393,6 +429,64 @@
     };
 
     BABYLON.SceneLoader = {
+        _ImportGeometry: function (parsedGeometry, mesh) {
+            // Geometry
+            if (parsedGeometry.positions && parsedGeometry.normals && parsedGeometry.indices) {
+                mesh.setVerticesData(parsedGeometry.positions, BABYLON.VertexBuffer.PositionKind, false);
+                mesh.setVerticesData(parsedGeometry.normals, BABYLON.VertexBuffer.NormalKind, false);
+
+                if (parsedGeometry.uvs) {
+                    mesh.setVerticesData(parsedGeometry.uvs, BABYLON.VertexBuffer.UVKind, false);
+                }
+
+                if (parsedGeometry.uvs2) {
+                    mesh.setVerticesData(parsedGeometry.uvs2, BABYLON.VertexBuffer.UV2Kind, false);
+                }
+
+                if (parsedGeometry.colors) {
+                    mesh.setVerticesData(parsedGeometry.colors, BABYLON.VertexBuffer.ColorKind, false);
+                }
+
+                if (parsedGeometry.matricesIndices) {
+                    var floatIndices = [];
+
+                    for (var i = 0; i < parsedGeometry.matricesIndices.length; i++) {
+                        var matricesIndex = parsedGeometry.matricesIndices[i];
+
+                        floatIndices.push(matricesIndex & 0x000000FF);
+                        floatIndices.push((matricesIndex & 0x0000FF00) >> 8);
+                        floatIndices.push((matricesIndex & 0x00FF0000) >> 16);
+                        floatIndices.push(matricesIndex >> 24);
+                    }
+
+                    mesh.setVerticesData(floatIndices, BABYLON.VertexBuffer.MatricesIndicesKind, false);
+                }
+
+                if (parsedGeometry.matricesWeights) {
+                    mesh.setVerticesData(parsedGeometry.matricesWeights, BABYLON.VertexBuffer.MatricesWeightsKind, false);
+                }
+
+                mesh.setIndices(parsedGeometry.indices);
+            }
+
+            // SubMeshes
+            if (parsedGeometry.subMeshes) {
+                mesh.subMeshes = [];
+                for (var subIndex = 0; subIndex < parsedGeometry.subMeshes.length; subIndex++) {
+                    var parsedSubMesh = parsedGeometry.subMeshes[subIndex];
+
+                    var subMesh = new BABYLON.SubMesh(parsedSubMesh.materialIndex, parsedSubMesh.verticesStart, parsedSubMesh.verticesCount, parsedSubMesh.indexStart, parsedSubMesh.indexCount, mesh);
+                }
+            }
+
+            // Update
+            mesh.computeWorldMatrix(true);
+
+            var scene = mesh.getScene();
+            if (scene._selectionOctree) {
+                scene._selectionOctree.addMesh(mesh);
+            }
+        },
         ImportMesh: function (meshName, rootUrl, sceneFilename, scene, then, progressCallBack) {
             // Checking if a manifest file has been set for this scene and if offline mode has been requested
             var database = new BABYLON.Database(rootUrl + sceneFilename);
@@ -456,7 +550,7 @@
                             }
                         }
 
-                        var mesh = parseMesh(parsedMesh, scene);
+                        var mesh = parseMesh(parsedMesh, scene, rootUrl);
                         meshes.push(mesh);
                     }
                 }
@@ -480,13 +574,14 @@
         Load: function (rootUrl, sceneFilename, engine, then, progressCallBack) {
             // Checking if a manifest file has been set for this scene and if offline mode has been requested
             var database = new BABYLON.Database(rootUrl + sceneFilename);
-            
+
             BABYLON.Tools.LoadFile(rootUrl + sceneFilename, function (data) {
                 var parsedData = JSON.parse(data);
                 var scene = new BABYLON.Scene(engine);
                 scene.database = database;
 
                 // Scene
+                scene.useDelayedTextureLoading = parsedData.useDelayedTextureLoading;
                 scene.autoClear = parsedData.autoClear;
                 scene.clearColor = BABYLON.Color3.FromArray(parsedData.clearColor);
                 scene.ambientColor = BABYLON.Color3.FromArray(parsedData.ambientColor);
@@ -510,27 +605,7 @@
                 // Cameras
                 for (var index = 0; index < parsedData.cameras.length; index++) {
                     var parsedCamera = parsedData.cameras[index];
-                    var camera = new BABYLON.FreeCamera(parsedCamera.name, BABYLON.Vector3.FromArray(parsedCamera.position), scene);
-                    camera.id = parsedCamera.id;
-
-                    if (parsedCamera.target) {
-                        camera.setTarget(BABYLON.Vector3.FromArray(parsedCamera.target));
-                    } else {
-                        camera.rotation = BABYLON.Vector3.FromArray(parsedCamera.rotation);
-                    }
-
-                    camera.fov = parsedCamera.fov;
-                    camera.minZ = parsedCamera.minZ;
-                    camera.maxZ = parsedCamera.maxZ;
-
-                    camera.speed = parsedCamera.speed;
-                    camera.inertia = parsedCamera.inertia;
-
-                    camera.checkCollisions = parsedCamera.checkCollisions;
-                    camera.applyGravity = parsedCamera.applyGravity;
-                    if (parsedCamera.ellipsoid) {
-                        camera.ellipsoid = BABYLON.Vector3.FromArray(parsedCamera.ellipsoid);
-                    }
+                    parseCamera(parsedCamera, scene);
                 }
 
                 if (parsedData.activeCameraID) {
@@ -563,7 +638,21 @@
                 // Meshes
                 for (var index = 0; index < parsedData.meshes.length; index++) {
                     var parsedMesh = parsedData.meshes[index];
-                    parseMesh(parsedMesh, scene);
+                    parseMesh(parsedMesh, scene, rootUrl);
+                }
+
+                // Connecting cameras parents and locked target
+                for (var index = 0; index < scene.cameras.length; index++) {
+                    var camera = scene.cameras[index];
+                    if (camera._waitingParentId) {
+                        camera.parent = scene.getLastEntryByID(camera._waitingParentId);
+                        delete camera._waitingParentId;
+                    }
+                    
+                    if (camera._waitingLockedTargetId) {
+                        camera.lockedTarget = scene.getLastEntryByID(camera._waitingLockedTargetId);
+                        delete camera._waitingLockedTargetId;
+                    }
                 }
 
                 // Particles Systems

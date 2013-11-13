@@ -9,8 +9,8 @@
         this.verticesCount = verticesCount;
         this.indexStart = indexStart;
         this.indexCount = indexCount;
-        
-        this._boundingInfo = new BABYLON.BoundingInfo(this._mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind), verticesStart, verticesCount);
+
+        this.refreshBoundingInfo();
     };
     
     //Properties
@@ -37,6 +37,17 @@
     };
 
     // Methods
+    BABYLON.SubMesh.prototype.refreshBoundingInfo = function () {
+        var data = this._mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+
+        if (!data) {
+            return;
+        }
+
+        var extend = BABYLON.Tools.ExtractMinAndMax(data, this.verticesStart, this.verticesCount);
+        this._boundingInfo = new BABYLON.BoundingInfo(extend.minimum, extend.maximum);
+    };
+
     BABYLON.SubMesh.prototype._checkCollision = function (collider) {
         return this._boundingInfo._checkCollision(collider);
     };
@@ -73,7 +84,7 @@
         return ray.intersectsBox(this._boundingInfo.boundingBox);
     };
 
-    BABYLON.SubMesh.prototype.intersects = function (ray, positions, indices) {
+    BABYLON.SubMesh.prototype.intersects = function (ray, positions, indices, fastCheck) {
         var distance = Number.MAX_VALUE;
         
         // Triangles test
@@ -85,8 +96,12 @@
             var result = ray.intersectsTriangle(p0, p1, p2);
 
             if (result.hit) {
-                if (result.distance < distance && result.distance >= 0) {
+                if ((fastCheck || result.distance < distance) && result.distance >= 0) {
                     distance = result.distance;
+
+                    if (fastCheck) {
+                        break;
+                    }
                 }
             }
         }

@@ -46,12 +46,13 @@
     BABYLON.Layer.prototype.render = function () {
         // Check
         if (!this._effect.isReady() || !this.texture || !this.texture.isReady())
-            return 0;
+            return;
 
         var engine = this._scene.getEngine();
        
         // Render
         engine.enableEffect(this._effect);
+        engine.setState(false);
 
         // Texture
         this._effect.setTexture("textureSampler", this.texture);
@@ -71,7 +72,7 @@
     
     BABYLON.Layer.prototype.dispose = function () {
         if (this._vertexBuffer) {
-            //this._scene.getEngine()._releaseBuffer(this._vertexBuffer);
+            this._scene.getEngine()._releaseBuffer(this._vertexBuffer);
             this._vertexBuffer = null;
         }
 

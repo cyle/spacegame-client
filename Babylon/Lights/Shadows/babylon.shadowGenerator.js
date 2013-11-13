@@ -11,6 +11,7 @@
         this._shadowMap = new BABYLON.RenderTargetTexture(light.name + "_shadowMap", mapSize, this._scene, false);
         this._shadowMap.wrapU = BABYLON.Texture.CLAMP_ADDRESSMODE;
         this._shadowMap.wrapV = BABYLON.Texture.CLAMP_ADDRESSMODE;
+        this._shadowMap.renderParticles = false;
                 
         // Custom render function
         var that = this;
@@ -39,7 +40,7 @@
             }
         };
 
-        this._shadowMap.customRenderFunction = function (opaqueSubMeshes, alphaTestSubMeshes, transparentSubMeshes, activeMeshes) {
+        this._shadowMap.customRenderFunction = function (opaqueSubMeshes, alphaTestSubMeshes) {
             var index;
             
             for (index = 0; index < opaqueSubMeshes.length; index++) {
@@ -69,10 +70,6 @@
             defines.push("#define VSM");
         }
         
-        if (BABYLON.Tools.isIE()) {
-            defines.push("#define IE");
-        }
-
         var attribs = [BABYLON.VertexBuffer.PositionKind];
         if (mesh.skeleton && mesh.isVerticesDataPresent(BABYLON.VertexBuffer.MatricesIndicesKind) && mesh.isVerticesDataPresent(BABYLON.VertexBuffer.MatricesWeightsKind)) {
             attribs.push(BABYLON.VertexBuffer.MatricesIndicesKind);
@@ -104,14 +101,21 @@
     
     // Methods
     BABYLON.ShadowGenerator.prototype.getTransformMatrix = function () {
-        if (!this._cachedPosition || !this._cachedDirection || !this._light.position.equals(this._cachedPosition) || !this._light.direction.equals(this._cachedDirection)) {
+        var lightPosition = this._light.position;
+        var lightDirection = this._light.direction;
+        
+        if (this._light._computeTransformedPosition()) {
+            lightPosition = this._light._transformedPosition;
+        }
 
-            this._cachedPosition = this._light.position.clone();
-            this._cachedDirection = this._light.direction.clone();
+        if (!this._cachedPosition || !this._cachedDirection || !lightPosition.equals(this._cachedPosition) || !lightDirection.equals(this._cachedDirection)) {
+
+            this._cachedPosition = lightPosition.clone();
+            this._cachedDirection = lightDirection.clone();
 
             var activeCamera = this._scene.activeCamera;
 
-            BABYLON.Matrix.LookAtLHToRef(this._light.position, this._light.position.add(this._light.direction), BABYLON.Vector3.Up(), this._viewMatrix);
+            BABYLON.Matrix.LookAtLHToRef(lightPosition, this._light.position.add(lightDirection), BABYLON.Vector3.Up(), this._viewMatrix);
             BABYLON.Matrix.PerspectiveFovLHToRef(Math.PI / 2.0, 1.0, activeCamera.minZ, activeCamera.maxZ, this._projectionMatrix);
 
             this._viewMatrix.multiplyToRef(this._projectionMatrix, this._transformMatrix);
