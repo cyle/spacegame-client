@@ -73,6 +73,9 @@ login_btn.addEventListener('click', function() {
 	// update your position if the server tells you to
 	socket.on('update-position', updatePosition);
 	
+	// die when the server tells you to
+	socket.on('deadPlayer', deadPlayer);
+	
 	// let the server know you're connected and loaded up
 	socket.emit('connected', playerName); 
 	
@@ -327,6 +330,20 @@ function removePlayer(name) {
 		if (players[i].name == name) {
 			players[i].done = true;
 		}
+	}
+}
+
+function deadPlayer(name) {
+	console.log('a player died: ' + name);
+	if (name == playerName) {
+		// you died! oh no!
+		socket.disconnect();
+		document.getElementById('game').innerHTML = '<p style="text-align:center;font-size:3em;">GAME OVER</p>';
+		alert('You died!');
+	} else {
+		// do nothing, i guess
+		// maybe someday show a chat message
+		// and an explosion if they're nearby
 	}
 }
 
