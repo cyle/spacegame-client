@@ -162,7 +162,7 @@ function buildArea() {
 	// the player camera will be constrained, allowing a top-down view of the player's ship
 	// arc camera: name, alpha (angle, in radians), beta (another angle, in radians), radius (how far away initially), pointing at, scene to add it to
 	//console.log('creating camera');
-	camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 50, new BABYLON.Vector3(0, 0, 0), scene);
+	camera = new BABYLON.ArcRotateCamera("Camera", Math.PI/2, Math.PI/2, 65, new BABYLON.Vector3(0, 0, 0), scene);
 	// constrain the camera
 	camera.lowerRadiusLimit = 10;
 	camera.upperRadiusLimit = 75;
@@ -252,6 +252,17 @@ function buildArea() {
 			spacestation.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
 			spacestation.collideWith = true;
 			spacestation.solid = true;
+		} else if (thing.type == 'aperture') {
+			if (thing.model.type == 'sphere') {
+				var aperture = BABYLON.Mesh.CreateSphere("aperture-"+i, thing.model.seg, thing.model.size, scene);
+				aperture.material = new BABYLON.StandardMaterial("spacestation-material", scene);
+				aperture.material.emissiveColor = new BABYLON.Color4(thing.model.color.r, thing.model.color.g, thing.model.color.b, thing.model.color.a);
+				aperture.material.wireframe = true;
+			} else if (thing.model.type == 'file') {
+				// eventually handle it as a model file here...
+			}
+			aperture.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			aperture.collideWith = true;
 		} else {
 			console.log('unknown object in area: ');
 			console.log(thing);
