@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.Light = function (name, scene) {
@@ -12,6 +14,9 @@
         
         // Animations
         this.animations = [];
+        
+        // Exclusions
+        this.excludedMeshes = [];
     };
     
     BABYLON.Light.prototype = Object.create(BABYLON.Node.prototype);

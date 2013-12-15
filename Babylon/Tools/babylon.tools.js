@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.Tools = {};
@@ -39,6 +41,10 @@
             return;
         }
         this.push(value);
+    };
+    
+    BABYLON.Tools.SmartArray.prototype.sort = function (compareFn) {
+        this.data.sort(compareFn);
     };
 
     BABYLON.Tools.SmartArray.prototype.reset = function() {
@@ -166,7 +172,27 @@
             database.openAsync(loadFromIndexedDB, noIndexedDB);
         }
         else {
-            noIndexedDB();
+            if (url.indexOf("file:") === -1) {
+                noIndexedDB();
+            }
+            else {
+                try {
+                    var textureName = url.substring(5);
+                    var blobURL;
+                    try {
+                        blobURL = URL.createObjectURL(BABYLON.FilesTextures[textureName], { oneTimeOnly: true });
+                    }
+                    catch (ex) {
+                        // Chrome doesn't support oneTimeOnly parameter
+                        blobURL = URL.createObjectURL(BABYLON.FilesTextures[textureName]);
+                    }
+                    img.src = blobURL;
+                }
+                catch (e) {
+                    console.log("Error while trying to load texture: " + textureName);
+                    img.src = null;
+                }
+            }
         }
 
         return img;
@@ -204,6 +230,16 @@
         else {
             noIndexedDB();
         }
+    };
+
+    BABYLON.Tools.ReadFile = function (fileToLoad, callback, progressCallBack) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            callback(e.target.result);
+        };
+        reader.onprogress = progressCallBack;
+        // Asynchronous read
+        reader.readAsText(fileToLoad);
     };
 
     // Misc.    

@@ -2,13 +2,6 @@
 precision mediump float;
 #endif
 
-#define MAP_EXPLICIT	0.
-#define MAP_SPHERICAL	1.
-#define MAP_PLANAR		2.
-#define MAP_CUBIC		3.
-#define MAP_PROJECTION	4.
-#define MAP_SKYBOX		5.
-
 // Attributes
 attribute vec3 position;
 attribute vec3 normal;
@@ -29,6 +22,7 @@ attribute vec4 matricesWeights;
 // Uniforms
 uniform mat4 world;
 uniform mat4 view;
+uniform mat4 viewProjection;
 
 #ifdef DIFFUSE
 varying vec2 vDiffuseUV;
@@ -46,13 +40,6 @@ uniform vec2 vAmbientInfos;
 varying vec2 vOpacityUV;
 uniform mat4 opacityMatrix;
 uniform vec2 vOpacityInfos;
-#endif
-
-#ifdef REFLECTION
-uniform vec3 vEyePosition;
-varying vec3 vReflectionUVW;
-uniform vec3 vReflectionInfos;
-uniform mat4 reflectionMatrix;
 #endif
 
 #ifdef EMISSIVE
@@ -75,9 +62,6 @@ uniform mat4 bumpMatrix;
 
 #ifdef BONES
 uniform mat4 mBones[BonesPerMesh];
-uniform mat4 viewProjection;
-#else
-uniform mat4 worldViewProjection;
 #endif
 
 // Output
@@ -117,43 +101,15 @@ varying vec4 vPositionFromLight3;
 #endif
 
 #ifdef REFLECTION
-vec3 computeReflectionCoords(float mode, vec4 worldPos, vec3 worldNormal)
-{
-	if (mode == MAP_SPHERICAL)
-	{
-		vec3 coords = vec3(view * vec4(worldNormal, 0.0));
-
-		return vec3(reflectionMatrix * vec4(coords, 1.0));
-	}
-	else if (mode == MAP_PLANAR)
-	{
-		vec3 viewDir = worldPos.xyz - vEyePosition;
-		vec3 coords = normalize(reflect(viewDir, worldNormal));
-
-		return vec3(reflectionMatrix * vec4(coords, 1));
-	}
-	else if (mode == MAP_CUBIC)
-	{
-		vec3 viewDir = worldPos.xyz - vEyePosition;
-		vec3 coords = reflect(viewDir, worldNormal);
-
-		return vec3(reflectionMatrix * vec4(coords, 0));
-	}
-	else if (mode == MAP_PROJECTION)
-	{
-		return vec3(reflectionMatrix * (view * worldPos));
-	}
-	else if (mode == MAP_SKYBOX)
-	{
-		return position;
-	}
-
-	return vec3(0, 0, 0);
-}
+varying vec3 vPositionUVW;
 #endif
 
 void main(void) {
 	mat4 finalWorld;
+
+#ifdef REFLECTION
+	vPositionUVW = position;
+#endif 
 
 #ifdef BONES
 	mat4 m0 = mBones[int(matricesIndices.x)] * matricesWeights.x;
@@ -167,11 +123,10 @@ void main(void) {
 	finalWorld = world * (m0 + m1 + m2);
 #endif 
 
-	gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
 #else
 	finalWorld = world;
-	gl_Position = worldViewProjection * vec4(position, 1.0);
 #endif
+	gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
 
 	vec4 worldPos = finalWorld * vec4(position, 1.0);
 	vPositionW = vec3(worldPos);
@@ -216,10 +171,6 @@ void main(void) {
 	{
 		vOpacityUV = vec2(opacityMatrix * vec4(uv2, 1.0, 0.0));
 	}
-#endif
-
-#ifdef REFLECTION
-	vReflectionUVW = computeReflectionCoords(vReflectionInfos.x, vec4(vPositionW, 1.0), vNormalW);
 #endif
 
 #ifdef EMISSIVE

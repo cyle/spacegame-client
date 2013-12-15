@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.BaseTexture = function (url, scene) {
@@ -92,15 +94,19 @@
     };
 
     BABYLON.BaseTexture.prototype.dispose = function () {
+        // Remove from scene
+        var index = this._scene.textures.indexOf(this);
+
+        if (index >= 0) {
+            this._scene.textures.splice(index, 1);
+        }
+
         if (this._texture === undefined) {
             return;
         }
 
         this.releaseInternalTexture();
 
-        // Remove from scene
-        var index = this._scene.textures.indexOf(this);
-        this._scene.textures.splice(index, 1);
 
         // Callback
         if (this.onDispose) {

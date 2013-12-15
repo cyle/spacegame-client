@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.PostProcess = function (name, fragmentUrl, parameters, samplers, ratio, camera, samplingMode) {
@@ -41,6 +43,9 @@
             }
         }
         this._engine.bindFramebuffer(this._texture);
+        
+        // Clear
+        this._engine.clear(this._scene.clearColor, this._scene.autoClear || this._scene.forceWireframe, true);
     };
 
     BABYLON.PostProcess.prototype.apply = function () {

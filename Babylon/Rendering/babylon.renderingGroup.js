@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.RenderingGroup = function (index, scene) {
@@ -46,15 +48,36 @@
         }
 
         // Transparent
-        engine.setAlphaMode(BABYLON.Engine.ALPHA_COMBINE);
-        for (subIndex = 0; subIndex < this._transparentSubMeshes.length; subIndex++) {
-            submesh = this._transparentSubMeshes.data[subIndex];
-            this._activeVertices += submesh.verticesCount;
+        if (this._transparentSubMeshes.length) {
+            // Sorting
+            for (subIndex = 0; subIndex < this._transparentSubMeshes.length; subIndex++) {
+                submesh = this._transparentSubMeshes.data[subIndex];
+                submesh._distanceToCamera = submesh.getBoundingInfo().boundingSphere.centerWorld.subtract(this._scene.activeCamera.position).length();
+            }
 
-            submesh.render();
+            var sortedArray = this._transparentSubMeshes.data.slice(0, this._transparentSubMeshes.length);
+
+            sortedArray.sort(function (a, b) {
+                if (a._distanceToCamera < b._distanceToCamera) {
+                    return 1;
+                }
+                if (a._distanceToCamera > b._distanceToCamera) {
+                    return -1;
+                }
+
+                return 0;
+            });
+
+            // Rendering
+            engine.setAlphaMode(BABYLON.Engine.ALPHA_COMBINE);
+            for (subIndex = 0; subIndex < sortedArray.length; subIndex++) {
+                submesh = sortedArray[subIndex];
+                this._activeVertices += submesh.verticesCount;
+
+                submesh.render();
+            }
+            engine.setAlphaMode(BABYLON.Engine.ALPHA_DISABLE);
         }
-        engine.setAlphaMode(BABYLON.Engine.ALPHA_DISABLE);
-
         return true;
     };
 
@@ -71,12 +94,12 @@
 
         if (material.needAlphaBlending() || mesh.visibility < 1.0) { // Transparent
             if (material.alpha > 0 || mesh.visibility < 1.0) {
-                this._transparentSubMeshes.push(subMesh); // Opaque
+                this._transparentSubMeshes.push(subMesh);
             }
         } else if (material.needAlphaTesting()) { // Alpha test
             this._alphaTestSubMeshes.push(subMesh);
         } else {
-            this._opaqueSubMeshes.push(subMesh);
+            this._opaqueSubMeshes.push(subMesh); // Opaque
         }
     };
 })();

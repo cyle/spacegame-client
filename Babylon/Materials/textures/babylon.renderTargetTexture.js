@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.RenderTargetTexture = function (name, size, scene, generateMipMaps) {
@@ -6,6 +8,7 @@
         this._scene.textures.push(this);
 
         this.name = name;
+        this._generateMipMaps = generateMipMaps;
 
         this._texture = scene.getEngine().createRenderTargetTexture(size, generateMipMaps);
 
@@ -34,6 +37,7 @@
     };
 
     BABYLON.RenderTargetTexture.prototype.render = function () {
+
         if (this.onBeforeRender) {
             this.onBeforeRender();
         }
@@ -52,6 +56,9 @@
         }
 
         if (!this.renderList || this.renderList.length == 0) {
+            if (this.onAfterRender) {
+                this.onAfterRender();
+            }
             return;
         }
 
@@ -66,7 +73,7 @@
         for (var meshIndex = 0; meshIndex < this.renderList.length; meshIndex++) {
             var mesh = this.renderList[meshIndex];
 
-            if (mesh.isEnabled() && mesh.isVisible) {
+            if (mesh && mesh.isEnabled() && mesh.isVisible) {
                 for (var subIndex = 0; subIndex < mesh.subMeshes.length; subIndex++) {
                     var subMesh = mesh.subMeshes[subIndex];
                     scene._activeVertices += subMesh.verticesCount;

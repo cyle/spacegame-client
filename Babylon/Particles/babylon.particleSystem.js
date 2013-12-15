@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     var randomNumber = function (min, max) {
@@ -38,7 +40,7 @@
 
         // VBO
         this._vertexDeclaration = [3, 4, 4];
-        this._vertexStrideSize = 11 * 4; // 10 floats per particle (x, y, z, r, g, b, a, angle, size, offsetX, offsetY)
+        this._vertexStrideSize = 11 * 4; // 11 floats per particle (x, y, z, r, g, b, a, angle, size, offsetX, offsetY)
         this._vertexBuffer = scene.getEngine().createDynamicVertexBuffer(capacity * this._vertexStrideSize * 4);
 
         var indices = [];
@@ -62,6 +64,7 @@
         this._colorDiff = new BABYLON.Color4(0, 0, 0, 0);
         this._scaledDirection = BABYLON.Vector3.Zero();
         this._scaledGravity = BABYLON.Vector3.Zero();
+        this._currentRenderId = -1;
     };
 
     // Members
@@ -228,6 +231,12 @@
         // Check
         if (!this.emitter || !effect.isReady() || !this.particleTexture || !this.particleTexture.isReady())
             return;
+        
+        if (this._currentRenderId === this._scene.getRenderId()) {
+            return;
+        }
+
+        this._currentRenderId = this._scene.getRenderId();
 
         this._scaledUpdateSpeed = this.updateSpeed * this._scene.getAnimationRatio();
 

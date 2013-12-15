@@ -1,20 +1,10 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     BABYLON.MirrorTexture = function (name, size, scene, generateMipMaps) {
-        this._scene = scene;
-        this._scene.textures.push(this);
-
-        this.name = name;
-        this._generateMipMaps = generateMipMaps;
-
-        this._texture = scene.getEngine().createRenderTargetTexture(size, generateMipMaps);
-        
-        // Render list
-        this.renderList = [];
-
-        // Rendering groups
-        this._renderingManager = new BABYLON.RenderingManager(scene);
+        BABYLON.RenderTargetTexture.call(this, name, size, scene, generateMipMaps);
         
         // Internals
         this._transformMatrix = BABYLON.Matrix.Zero();
@@ -53,7 +43,7 @@
     
     BABYLON.MirrorTexture.prototype.clone = function () {
         var textureSize = this.getSize();
-        var newTexture = new BABYLON.DynamicTexture(this.name, textureSize.width, this._scene, this._generateMipMaps);
+        var newTexture = new BABYLON.MirrorTexture(this.name, textureSize.width, this._scene, this._generateMipMaps);
 
         // Base texture
         newTexture.hasAlpha = this.hasAlpha;

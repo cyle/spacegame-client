@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     var loadCubeTexture = function (rootUrl, parsedTexture, scene) {
@@ -157,6 +159,20 @@
         }
 
         return multiMaterial;
+    };
+    
+    var parseLensFlareSystem = function (parsedLensFlareSystem, scene, rootUrl) {
+        var emitter = scene.getLastEntryByID(parsedLensFlareSystem.emitterId);
+
+        var lensFlareSystem = new BABYLON.LensFlareSystem("lensFlareSystem#" + parsedLensFlareSystem.emitterId, emitter, scene);
+        lensFlareSystem.borderLimit = parsedLensFlareSystem.borderLimit;
+        
+        for (var index = 0; index < parsedLensFlareSystem.flares.length; index++) {
+            var parsedFlare = parsedLensFlareSystem.flares[index];
+            var flare = new BABYLON.LensFlare(parsedFlare.size, parsedFlare.position, BABYLON.Color3.FromArray(parsedFlare.color), rootUrl + parsedFlare.textureName, lensFlareSystem);
+        }
+
+        return lensFlareSystem;
     };
 
     var parseParticleSystem = function (parsedParticleSystem, scene, rootUrl) {
@@ -340,7 +356,8 @@
 
         mesh.setEnabled(parsedMesh.isEnabled);
         mesh.isVisible = parsedMesh.isVisible;
-
+        mesh.infiniteDistance = parsedMesh.infiniteDistance;
+        
         mesh.receiveShadows = parsedMesh.receiveShadows;
 
         mesh.billboardMode = parsedMesh.billboardMode;
@@ -351,6 +368,12 @@
 
         mesh.checkCollisions = parsedMesh.checkCollisions;
 
+        // Parent
+        if (parsedMesh.parentId) {
+            mesh.parent = scene.getLastEntryByID(parsedMesh.parentId);
+        }
+
+        // Geometry
         if (parsedMesh.delayLoadingFile) {
             mesh.delayLoadState = BABYLON.Engine.DELAYLOADSTATE_NOTLOADED;
             mesh.delayLoadingFile = rootUrl + parsedMesh.delayLoadingFile;
@@ -379,11 +402,6 @@
 
         } else {
             BABYLON.SceneLoader._ImportGeometry(parsedMesh, mesh);
-        }
-
-        // Parent
-        if (parsedMesh.parentId) {
-            mesh.parent = scene.getLastEntryByID(parsedMesh.parentId);
         }
 
         // Material
@@ -572,10 +590,7 @@
             }, progressCallBack, database);
         },
         Load: function (rootUrl, sceneFilename, engine, then, progressCallBack) {
-            // Checking if a manifest file has been set for this scene and if offline mode has been requested
-            var database = new BABYLON.Database(rootUrl + sceneFilename);
-
-            BABYLON.Tools.LoadFile(rootUrl + sceneFilename, function (data) {
+            function loadSceneFromData(data) {
                 var parsedData = JSON.parse(data);
                 var scene = new BABYLON.Scene(engine);
                 scene.database = database;
@@ -648,7 +663,7 @@
                         camera.parent = scene.getLastEntryByID(camera._waitingParentId);
                         delete camera._waitingParentId;
                     }
-                    
+
                     if (camera._waitingLockedTargetId) {
                         camera.lockedTarget = scene.getLastEntryByID(camera._waitingLockedTargetId);
                         delete camera._waitingLockedTargetId;
@@ -660,6 +675,14 @@
                     for (var index = 0; index < parsedData.particleSystems.length; index++) {
                         var parsedParticleSystem = parsedData.particleSystems[index];
                         parseParticleSystem(parsedParticleSystem, scene, rootUrl);
+                    }
+                }
+
+                // Lens flares
+                if (parsedData.lensFlareSystems) {
+                    for (var index = 0; index < parsedData.lensFlareSystems.length; index++) {
+                        var parsedLensFlareSystem = parsedData.lensFlareSystems[index];
+                        parseLensFlareSystem(parsedLensFlareSystem, scene, rootUrl);
                     }
                 }
 
@@ -676,7 +699,18 @@
                 if (then) {
                     then(scene);
                 }
-            }, progressCallBack, database);
+            };
+
+            if (rootUrl.indexOf("file:") === -1) {
+                // Checking if a manifest file has been set for this scene and if offline mode has been requested
+                var database = new BABYLON.Database(rootUrl + sceneFilename);
+
+                BABYLON.Tools.LoadFile(rootUrl + sceneFilename, loadSceneFromData, progressCallBack, database);
+            }
+            // Loading file from disk via input file or drag'n'drop
+            else {
+                BABYLON.Tools.ReadFile(sceneFilename, loadSceneFromData, progressCallBack);
+            }
         }
     };
 })();

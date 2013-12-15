@@ -1,4 +1,6 @@
-﻿var BABYLON = BABYLON || {};
+﻿"use strict";
+
+var BABYLON = BABYLON || {};
 
 (function () {
     var eventPrefix = BABYLON.Tools.GetPointerPrefix();
@@ -177,7 +179,11 @@
                 pointerId = null;
             };
 
-            this._onGestureStart = function(e) {
+            this._onGestureStart = function (e) {
+                if (window.MSGesture === undefined) {
+                    return;
+                }
+
                 if (!that._MSGestureHandler) {
                     that._MSGestureHandler = new MSGesture();
                     that._MSGestureHandler.target = canvas;
