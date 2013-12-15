@@ -222,6 +222,15 @@ function buildArea() {
 			asteroid.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
 			asteroid.collideWith = true;
 			asteroid.solid = true;
+		} else if (thing.type == 'dust-cloud') {
+			var dustcloud = BABYLON.Mesh.CreateRect("dustcloud-"+i, thing.width, thing.height, thing.depth, scene);
+			dustcloud.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			dustcloud.rotation.z = thing.r;
+			//dustcloud.collideWith = true;
+			//dustcloud.dustcloud = true;
+			dustcloud.material = new BABYLON.StandardMaterial("dustcloud-texture", scene);
+			dustcloud.material.emissiveColor = new BABYLON.Color4(0.85, 0.7, 0.5, 1);
+			dustcloud.material.wireframe = true;
 		} else if (thing.type == 'nebula') {
 			var nebula = BABYLON.Mesh.CreateRect("nebula-"+i, thing.width, thing.height, thing.depth, scene);
 			nebula.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
@@ -231,6 +240,15 @@ function buildArea() {
 			nebula.material = new BABYLON.StandardMaterial("nebula-texture", scene);
 			nebula.material.emissiveColor = new BABYLON.Color4(0.5, 0.0, 0.5, 1);
 			nebula.material.wireframe = true;
+		} else if (thing.type == 'ion-storm') {
+			var ionstorm = BABYLON.Mesh.CreateRect("ionstorm-"+i, thing.width, thing.height, thing.depth, scene);
+			ionstorm.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
+			ionstorm.rotation.z = thing.r;
+			ionstorm.collideWith = true;
+			ionstorm.ionstorm = true;
+			ionstorm.material = new BABYLON.StandardMaterial("ionstorm-texture", scene);
+			ionstorm.material.emissiveColor = new BABYLON.Color4(0.5, 0.5, 1, 1);
+			ionstorm.material.wireframe = true;
 		} else if (thing.type == 'safezone') {
 			var safezone = BABYLON.Mesh.CreateRect("safezone-"+i, thing.width, thing.height, thing.depth, scene);
 			safezone.position = new BABYLON.Vector3(thing.x, thing.y, thing.z);
